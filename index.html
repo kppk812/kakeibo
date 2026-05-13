@@ -18,7 +18,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
 .topbar{padding:24px 20px 12px; display:flex; justify-content:space-between; align-items:center;}
 .topbar-title{font-size:28px;font-weight:800;color:#1F1F1F;letter-spacing:-0.5px}
 .topbar-title span{color:#0A56D1}
-.backup-status{font-size:12px; font-weight:700; color:#444746; background:#E1E9F4; padding:6px 12px; border-radius:999px;}
+.backup-status{font-size:13px; font-weight:800; color:#444746; background:#E1E9F4; padding:6px 14px; border-radius:999px; display:flex; align-items:center; gap:4px;}
 
 /* メトリクス */
 .metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 20px}
@@ -123,7 +123,7 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 <div class="app">
 <div class="topbar">
   <div class="topbar-title">家計簿<span>.</span></div>
-  <div class="backup-status" id="backup-status"><i class="ti ti-cloud-check"></i> 待機中</div>
+  <div class="backup-status" id="backup-status"><i class="ti ti-cloud-upload"></i> 待機中</div>
 </div>
 
 <div class="metrics-row">
@@ -246,13 +246,6 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 
 <div class="page" id="page-settings">
   <div class="section">
-    <div class="section-label">クラウド同期 (Google Drive)</div>
-    <div class="card">
-      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#0A56D1"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
-      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#146C2E"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
-    </div>
-  </div>
-  <div class="section">
     <div class="section-label">支出カテゴリ</div>
     <div class="card">
       <div id="exp-cat-chips" style="margin-bottom:12px"></div>
@@ -270,6 +263,13 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
         <input class="m3-input" type="text" id="new-inc-cat" placeholder="新しいカテゴリ名">
         <button class="cat-add-btn" onclick="addCat('inc')">追加</button>
       </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">クラウド同期 (Google Drive)</div>
+    <div class="card">
+      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#0A56D1"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
+      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#146C2E"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
     </div>
   </div>
   <div class="section">
@@ -307,12 +307,25 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
     </div>
   </div>
 </div>
+<div class="modal-wrap" id="modal-sync-alert" onclick="if(event.target===this)closeSyncPopup()">
+  <div class="modal">
+    <div class="modal-head" style="color:#BA1A1A;"><i class="ti ti-alert-triangle" style="vertical-align:-2px;"></i> バックアップのお願い</div>
+    <p style="margin-bottom:16px;font-size:14px;color:#444746;line-height:1.6;">1週間以上クラウド同期（バックアップ）が行われていません。端末の故障やデータ消失に備え、Google Driveへの同期をお勧めします。</p>
+    <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#1F1F1F;margin-bottom:24px;font-weight:600;cursor:pointer;">
+      <input type="checkbox" id="skip-sync-popup-check" style="width:18px;height:18px;"> 以後表示しない
+    </label>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeSyncPopup()">後で</button>
+      <button class="btn-filled" onclick="closeSyncPopup(); showPage('settings', document.querySelectorAll('.nav-btn')[3]);">設定を開く</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 /* ================= Google Drive API 設定 ================= */
-const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com'; 
+const CLIENT_ID = 'YOUR_CLIENT_ID'; // ★ここを実際のクライアントIDに書き換える★
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 let tokenClient;
 let gapiInited = false;
@@ -335,41 +348,71 @@ function gisLoaded() {
   gisInited = true;
 }
 
+// 経過日数を計算する関数
+function getDiffDays(dateString) {
+  if(!dateString) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const lastDate = new Date(dateString);
+  lastDate.setHours(0,0,0,0);
+  return Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
+}
+
 function updateBackupStatusText() {
   const last = localStorage.getItem('kakeibo_last_backup');
   const el = document.getElementById('backup-status');
-  if(last === ymd(new Date())) {
-    el.innerHTML = '<i class="ti ti-cloud-check"></i> 同期済';
-    el.style.color = '#146C2E'; el.style.background = '#E8F5E9';
+  if(last) {
+    const diffDays = getDiffDays(last);
+    if (diffDays === 0) {
+      el.innerHTML = '<i class="ti ti-cloud-check"></i> 0日';
+      el.style.color = '#146C2E'; el.style.background = '#E8F5E9';
+    } else if (diffDays >= 7) {
+      el.innerHTML = `<i class="ti ti-cloud-upload"></i> ${diffDays}日`;
+      el.style.color = '#BA1A1A'; el.style.background = '#FFDAD6';
+    } else {
+      el.innerHTML = `<i class="ti ti-cloud-check"></i> ${diffDays}日`;
+      el.style.color = '#8F4E00'; el.style.background = '#FFF8E1'; // 1〜6日は黄色系
+    }
   } else {
     el.innerHTML = '<i class="ti ti-cloud-upload"></i> 未同期';
     el.style.color = '#BA1A1A'; el.style.background = '#FFDAD6';
   }
 }
 
+function checkSyncAlert() {
+  if (localStorage.getItem('kakeibo_skip_sync_popup') === 'true') return;
+  const last = localStorage.getItem('kakeibo_last_backup');
+  let needsAlert = false;
+  if (!last) {
+    needsAlert = true;
+  } else {
+    const diffDays = getDiffDays(last);
+    if (diffDays >= 7) needsAlert = true;
+  }
+  if (needsAlert) {
+    openModal('sync-alert');
+  }
+}
+
+function closeSyncPopup() {
+  if (document.getElementById('skip-sync-popup-check').checked) {
+    localStorage.setItem('kakeibo_skip_sync_popup', 'true');
+  }
+  closeModal('sync-alert');
+}
+
 function authAndSync(mode) {
   if (!gapiInited || !gisInited) { alert('APIの初期化中です。少し待ってから再度お試しください。'); return; }
   tokenClient.callback = async (resp) => {
     if (resp.error) return;
-    if (mode === 'save') await saveToDrive(true);
+    if (mode === 'save') await saveToDrive();
     else await loadFromDrive();
   };
   if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
   else tokenClient.requestAccessToken({prompt: ''});
 }
 
-// 自動バックアップトリガー（その日の最初の追加アクション時にサイレント実行を試みる）
-function triggerDailyAutoBackup() {
-  const lastBackup = localStorage.getItem('kakeibo_last_backup');
-  if(lastBackup !== ymd(new Date()) && gapiInited && gisInited) {
-    tokenClient.callback = async (resp) => {
-      if(!resp.error) await saveToDrive(false);
-    };
-    tokenClient.requestAccessToken({prompt: ''});
-  }
-}
-
-async function saveToDrive(manual = false) {
+async function saveToDrive() {
   try {
     const fileName = 'kakeibo_backup.json';
     const metadata = { name: fileName, parents: ['appDataFolder'] };
@@ -390,10 +433,10 @@ async function saveToDrive(manual = false) {
     
     localStorage.setItem('kakeibo_last_backup', ymd(new Date()));
     updateBackupStatusText();
-    if(manual) alert('Google Drive にデータを保存しました。');
+    alert('Google Drive にデータを保存しました。');
   } catch(e) {
     console.error(e);
-    if(manual) alert('バックアップに失敗しました。');
+    alert('バックアップに失敗しました。');
   }
 }
 
@@ -513,13 +556,13 @@ function addExpense(){
   const a=+document.getElementById('exp-amount').value, d=document.getElementById('exp-date').value, c=document.getElementById('exp-cat').value, n=document.getElementById('exp-note').value;
   if(!a||!d){alert('金額と日付を入力してください');return}
   D.expenses.push({id:Date.now(),date:d,amount:a,cat:c,note:n}); document.getElementById('exp-amount').value='';document.getElementById('exp-note').value='';
-  save(); refresh(); triggerDailyAutoBackup();
+  save(); refresh();
 }
 function addIncome(){
   const a=+document.getElementById('inc-amount').value, d=document.getElementById('inc-date').value, c=document.getElementById('inc-cat').value, n=document.getElementById('inc-note').value;
   if(!a||!d){alert('金額と日付を入力してください');return}
   D.income.push({id:Date.now(),date:d,amount:a,cat:c,note:n}); document.getElementById('inc-amount').value='';document.getElementById('inc-note').value='';
-  save(); refresh(); triggerDailyAutoBackup();
+  save(); refresh();
 }
 function renderFixedLists(){
   document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.length?D.fixedIncome.map(f=>`
@@ -602,7 +645,7 @@ function importCSV(event) {
         else if (type === '収入') { D.income.push({ id: Date.now() + Math.random(), date, amount, cat, note }); if (!D.incCats.includes(cat)) D.incCats.push(cat); count++; }
       }
     }
-    save(); refresh(); alert(`CSVから ${count} 件のデータを読み込み、追加しました。`); event.target.value = ''; triggerDailyAutoBackup();
+    save(); refresh(); alert(`CSVから ${count} 件のデータを読み込み、追加しました。`); event.target.value = '';
   }; reader.readAsText(file);
 }
 function clearAll(){ D={expenses:[],income:[],fixedIncome:[],fixedExpense:[], expCats:['食費','交通費','日用品','娯楽','医療','光熱費','通信費','その他'], incCats:['給与','副業','ボーナス','その他']}; save();refresh(); }
@@ -619,6 +662,7 @@ window.onload = () => {
   gapiLoaded(); gisLoaded(); setToday();
   document.getElementById('month-label').textContent = curMonth.getFullYear() + '年' + (curMonth.getMonth() + 1) + '月';
   refresh();
+  setTimeout(checkSyncAlert, 800); // 描画直後にバックアップ催促チェック
 };
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setToday(); });
 
