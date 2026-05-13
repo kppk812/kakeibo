@@ -246,13 +246,6 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 
 <div class="page" id="page-settings">
   <div class="section">
-    <div class="section-label">クラウド同期 (Google Drive)</div>
-    <div class="card">
-      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#0A56D1"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
-      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#146C2E"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
-    </div>
-  </div>
-  <div class="section">
     <div class="section-label">支出カテゴリ</div>
     <div class="card">
       <div id="exp-cat-chips" style="margin-bottom:12px"></div>
@@ -272,6 +265,15 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
       </div>
     </div>
   </div>
+
+  <div class="section">
+    <div class="section-label">クラウド同期 (Google Drive)</div>
+    <div class="card">
+      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#E1E9F4"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
+      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#E1E9F4"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-label">データ管理</div>
     <div class="card">
@@ -307,10 +309,11 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
     </div>
   </div>
 </div>
+
 <div class="modal-wrap" id="modal-sync-alert" onclick="if(event.target===this)closeSyncPopup()">
   <div class="modal">
     <div class="modal-head" style="color:#BA1A1A;"><i class="ti ti-alert-triangle" style="vertical-align:-2px;"></i> バックアップのお願い</div>
-    <p style="margin-bottom:16px;font-size:14px;color:#444746;line-height:1.6;">1週間以上クラウド同期（バックアップ）が行われていません。端末の故障やデータ消失に備え、Google Driveへの同期をお勧めします。</p>
+    <p style="margin-bottom:16px;font-size:14px;color:#444746;line-height:1.6;">1週間以上クラウド同期が行われていません。万が一の故障に備え、Google Driveへのバックアップをお勧めします。</p>
     <label style="display:flex;align-items:center;gap:8px;font-size:14px;color:#1F1F1F;margin-bottom:24px;font-weight:600;cursor:pointer;">
       <input type="checkbox" id="skip-sync-popup-check" style="width:18px;height:18px;"> 以後表示しない
     </label>
@@ -331,24 +334,10 @@ let tokenClient;
 let gapiInited = false;
 let gisInited = false;
 
-function gapiLoaded() {
-  gapi.load('client', () => {
-    gapi.client.init({}).then(() => {
-      gapi.client.load('drive', 'v3');
-      gapiInited = true;
-    });
-  });
-}
-function gisLoaded() {
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: ''
-  });
-  gisInited = true;
-}
+function gapiLoaded() { gapi.load('client', () => { gapi.client.init({}).then(() => { gapi.client.load('drive', 'v3'); gapiInited = true; }); }); }
+function gisLoaded() { tokenClient = google.accounts.oauth2.initTokenClient({ client_id: CLIENT_ID, scope: SCOPES, callback: '' }); gisInited = true; }
 
-// 経過日数を計算する関数（ローカルタイムゾーンで厳密に計算）
+// 経過日数を厳密に計算
 function getDiffDays(dateString) {
   if(!dateString) return null;
   const today = new Date();
@@ -372,7 +361,7 @@ function updateBackupStatusText() {
       el.style.color = '#BA1A1A'; el.style.background = '#FFDAD6';
     } else {
       el.innerHTML = `<i class="ti ti-cloud-check"></i> ${diffDays}日`;
-      el.style.color = '#8F4E00'; el.style.background = '#FFF8E1'; // 1〜6日は黄色
+      el.style.color = '#8F4E00'; el.style.background = '#FFF8E1';
     }
   } else {
     el.innerHTML = '<i class="ti ti-cloud-upload"></i> 未同期';
@@ -383,15 +372,15 @@ function updateBackupStatusText() {
 function checkSyncAlert() {
   if (localStorage.getItem('kakeibo_skip_sync_popup') === 'true') return;
   
-  // アプリ利用開始日（アップデート日）を記録
+  // 初回起動（アップデート）日を記録
   let firstLaunch = localStorage.getItem('kakeibo_first_launch');
   if (!firstLaunch) {
     firstLaunch = ymd(new Date());
     localStorage.setItem('kakeibo_first_launch', firstLaunch);
+    return; // 初日は出さない
   }
 
   const last = localStorage.getItem('kakeibo_last_backup');
-  // バックアップ履歴があればその日、なければ利用開始日を基準にする
   const baseDate = last ? last : firstLaunch;
   const diffDays = getDiffDays(baseDate);
 
@@ -408,14 +397,13 @@ function closeSyncPopup() {
 }
 
 function authAndSync(mode) {
-  if (!gapiInited || !gisInited) { alert('APIの初期化中です。少し待ってから再度お試しください。'); return; }
+  if (!gapiInited || !gisInited) { alert('初期化中です。少し待ってお試しください。'); return; }
   tokenClient.callback = async (resp) => {
     if (resp.error) return;
     if (mode === 'save') await saveToDrive();
     else await loadFromDrive();
   };
-  if (gapi.client.getToken() === null) tokenClient.requestAccessToken({prompt: 'consent'});
-  else tokenClient.requestAccessToken({prompt: ''});
+  tokenClient.requestAccessToken({prompt: (gapi.client.getToken() === null ? 'consent' : '')});
 }
 
 async function saveToDrive() {
@@ -423,49 +411,34 @@ async function saveToDrive() {
     const fileName = 'kakeibo_backup.json';
     const metadata = { name: fileName, parents: ['appDataFolder'] };
     const fileContent = JSON.stringify(D);
-    
     const res = await gapi.client.drive.files.list({ q: `name = '${fileName}'`, spaces: 'appDataFolder' });
     const existingFile = res.result.files && res.result.files.length > 0 ? res.result.files[0] : null;
-
-    const boundary = 'foo_bar_baz';
+    const boundary = 'boundary_xxx';
     const delimiter = `\r\n--${boundary}\r\n`;
     const close_delim = `\r\n--${boundary}--`;
     const body = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}${delimiter}Content-Type: application/json\r\n\r\n${fileContent}${close_delim}`;
-
     const path = existingFile ? `/upload/drive/v3/files/${existingFile.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart';
     const method = existingFile ? 'PATCH' : 'POST';
-
     await gapi.client.request({ path, method, params: { uploadType: 'multipart' }, headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body });
-    
     localStorage.setItem('kakeibo_last_backup', ymd(new Date()));
     updateBackupStatusText();
     alert('Google Drive にデータを保存しました。');
-  } catch(e) {
-    console.error(e);
-    alert('バックアップに失敗しました。');
-  }
+  } catch(e) { console.error(e); alert('保存に失敗しました。'); }
 }
 
 async function loadFromDrive() {
   try {
     const res = await gapi.client.drive.files.list({ q: "name = 'kakeibo_backup.json'", spaces: 'appDataFolder', fields: 'files(id)' });
     if (!res.result.files || res.result.files.length === 0) { alert('バックアップが見つかりません。'); return; }
-
     const file = res.result.files[0];
     const data = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
     if (confirm('Google Drive のデータで現在の家計簿を上書きしますか？')) {
-      D = data.result;
-      save();
-      refresh();
-      alert('データを復元しました。');
+      D = data.result; save(); refresh(); alert('データを復元しました。');
     }
-  } catch(e) {
-    console.error(e);
-    alert('復元に失敗しました。');
-  }
+  } catch(e) { console.error(e); alert('復元に失敗しました。'); }
 }
 
-/* ================= アプリケーション ロジック ================= */
+/* ================= 家計簿 ロジック ================= */
 const CAT_ICONS={食費:'ti-soup',交通費:'ti-car',日用品:'ti-basket',娯楽:'ti-device-gamepad',医療:'ti-heart-rate-monitor',光熱費:'ti-bulb',通信費:'ti-wifi',給与:'ti-briefcase',副業:'ti-coin',ボーナス:'ti-gift',その他:'ti-dots'};
 const PALETTE=['#0A56D1','#146C2E','#BA1A1A','#B3261E','#6750A4','#006874','#8C1D18','#795548','#984061','#4A6572','#8F4E00','#2E6C00','#65558F','#0061A4','#9A2541'];
 const catColorMap={};
@@ -482,13 +455,11 @@ D.expenses = (Array.isArray(D.expenses) ? D.expenses : []).map(e => ({ ...e, dat
 D.income = (Array.isArray(D.income) ? D.income : []).map(i => ({ ...i, date: safeDate(i.date), amount: i.amount || 0 }));
 D.fixedIncome = (Array.isArray(D.fixedIncome) ? D.fixedIncome : []).filter(f => f && f.id);
 D.fixedExpense = (Array.isArray(D.fixedExpense) ? D.fixedExpense : []).filter(f => f && f.id);
-
 if (!Array.isArray(D.expCats) || D.expCats.length === 0) D.expCats = ['食費','交通費','日用品','娯楽','医療','光熱費','通信費','その他'];
 if (!Array.isArray(D.incCats) || D.incCats.length === 0) D.incCats = ['給与','副業','ボーナス','その他'];
 
 let curMonth=new Date();
 let charts={};
-
 function save(){ try { localStorage.setItem('kakeibo_v6',JSON.stringify(D)); } catch (e) {} }
 function fmt(n){return '¥'+Math.round(n).toLocaleString()}
 function ymd(d){return d.toISOString().slice(0,10)}
@@ -501,20 +472,8 @@ function applyFixed(key){
   D.fixedExpense.forEach(f=>{ if(!D.expenses.find(e=>e.fixed&&e.fixedId===f.id&&(e.date||'').startsWith(key))) D.expenses.push({id:Date.now()+Math.random(),date:key+'-01',amount:f.amount,cat:f.cat,note:f.name,fixed:true,fixedId:f.id}); });
   save();
 }
-function getTotals(key){
-  applyFixed(key);
-  const exp=D.expenses.filter(e=>(e.date||'').startsWith(key)).reduce((s,e)=>s+(e.amount||0),0);
-  const inc=D.income.filter(i=>(i.date||'').startsWith(key)).reduce((s,i)=>s+(i.amount||0),0);
-  return{exp,inc,bal:inc-exp};
-}
-function updateMetrics(){
-  const{exp,bal}=getTotals(curKey());
-  document.getElementById('m-exp').textContent=fmt(exp);
-  const el=document.getElementById('m-bal');
-  el.textContent=fmt(bal);
-  el.className='metric-val bal '+(bal>=0?'pos':'neg');
-  updateBackupStatusText();
-}
+function getTotals(key){ applyFixed(key); const exp=D.expenses.filter(e=>(e.date||'').startsWith(key)).reduce((s,e)=>s+(e.amount||0),0); const inc=D.income.filter(i=>(i.date||'').startsWith(key)).reduce((s,i)=>s+(i.amount||0),0); return{exp,inc,bal:inc-exp}; }
+function updateMetrics(){ const{exp,bal}=getTotals(curKey()); document.getElementById('m-exp').textContent=fmt(exp); const el=document.getElementById('m-bal'); el.textContent=fmt(bal); el.className='metric-val bal '+(bal>=0?'pos':'neg'); updateBackupStatusText(); }
 
 function handleSearch() {
   const query = document.getElementById('search-input').value.trim().toLowerCase();
@@ -527,7 +486,7 @@ function handleSearch() {
 
 function renderItems(cid,items,type){
   const el=document.getElementById(cid);
-  if(!items || !items.length){el.innerHTML='<div class="empty-state"><i class="ti ti-inbox"></i>データがありません</div>';return}
+  if(!items || !items.length){el.innerHTML='<div class="empty-state"><i class="ti ti-inbox"></i>データなし</div>';return}
   el.innerHTML=items.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(item=>`
     <div class="list-item">
       <div class="item-icon"><i class="ti ${getIcon(item.cat)}"></i></div>
@@ -571,17 +530,14 @@ function addIncome(){
   save(); refresh();
 }
 function renderFixedLists(){
-  document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.length?D.fixedIncome.map(f=>`
-    <div class="fixed-row"><div class="item-icon"><i class="ti ti-refresh"></i></div><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-size:15px;font-weight:700;color:#146C2E;margin-right:6px">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('income','${f.id}')"><i class="ti ti-x"></i></button></div>`).join(''):'';
-  document.getElementById('fixed-expense-list').innerHTML=D.fixedExpense.length?D.fixedExpense.map(f=>`
-    <div class="fixed-row"><div class="item-icon"><i class="ti ti-refresh"></i></div><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-size:15px;font-weight:700;color:#BA1A1A;margin-right:6px">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('expense','${f.id}')"><i class="ti ti-x"></i></button></div>`).join(''):'';
+  document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.length?D.fixedIncome.map(f=>`<div class="fixed-row"><div class="item-icon"><i class="ti ti-refresh"></i></div><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-size:15px;font-weight:700;color:#146C2E;margin-right:6px">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('income','${f.id}')"><i class="ti ti-x"></i></button></div>`).join(''):'';
+  document.getElementById('fixed-expense-list').innerHTML=D.fixedExpense.length?D.fixedExpense.map(f=>`<div class="fixed-row"><div class="item-icon"><i class="ti ti-refresh"></i></div><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-size:15px;font-weight:700;color:#BA1A1A;margin-right:6px">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('expense','${f.id}')"><i class="ti ti-x"></i></button></div>`).join(''):'';
 }
 function delFixed(type,id){ if(type==='income')D.fixedIncome=D.fixedIncome.filter(f=>String(f.id)!==String(id)); else D.fixedExpense=D.fixedExpense.filter(f=>String(f.id)!==String(id)); save();renderFixedLists();applyFixed(curKey());refresh(); }
 function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
 function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
 function saveFixed(type){
-  const pre = type==='income'?'fi':'fe';
-  const name=document.getElementById(pre+'-name').value.trim(), amount=+document.getElementById(pre+'-amount').value, cat=document.getElementById(pre+'-cat').value;
+  const pre = type==='income'?'fi':'fe'; const name=document.getElementById(pre+'-name').value.trim(), amount=+document.getElementById(pre+'-amount').value, cat=document.getElementById(pre+'-cat').value;
   if(!name||!amount){alert('名称と金額を入力してください');return}
   if(type==='income') D.fixedIncome.push({id:Date.now(),name,amount,cat}); else D.fixedExpense.push({id:Date.now(),name,amount,cat});
   document.getElementById(pre+'-name').value='';document.getElementById(pre+'-amount').value=''; closeModal(pre); save();renderFixedLists();applyFixed(curKey());refresh();
@@ -593,10 +549,7 @@ function showPage(name,btn){
   if (name === 'home') { const searchInp = document.getElementById('search-input'); if(searchInp) searchInp.value = ''; refresh(); }
   if(name==='stats')renderStats();
 }
-function switchStat(tab,btn){
-  document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  document.getElementById('st-'+tab).classList.add('active'); btn.classList.add('active'); renderStatTab(tab);
-}
+function switchStat(tab,btn){ document.querySelectorAll('.stat-tab').forEach(t=>t.classList.remove('active')); document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); document.getElementById('st-'+tab).classList.add('active'); btn.classList.add('active'); renderStatTab(tab); }
 function renderStats(){ renderTopPie(); const a=document.querySelector('.stat-tab.active'); if(a)renderStatTab(a.id.replace('st-','')); }
 function getBycat(key){ applyFixed(key); const bycat={}; D.expenses.filter(e=>(e.date||'').startsWith(key)).forEach(e=>{bycat[e.cat]=(bycat[e.cat]||0)+(e.amount||0)}); return bycat; }
 function renderTopPie(){
@@ -628,13 +581,7 @@ function renderStatTab(tab){
     charts.yearly=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'収入',data:incs,backgroundColor:'#146C2E',borderRadius:4,borderSkipped:false},{label:'支出',data:exps,backgroundColor:'#BA1A1A',borderRadius:4,borderSkipped:false}]},options:{responsive:true,plugins:{legend:{labels:{color:tc,font:{size:13,weight:'700'}}}},scales:{x:{ticks:{color:tc,font:{size:12,weight:'600'}},grid:{color:gc}},y:{ticks:{color:tc,font:{size:12,weight:'600'},callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}});
   }
 }
-function exportCSV() {
-  const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`; let csv = "日付,区分,カテゴリ,金額,メモ\n";
-  const allItems = [...D.expenses.map(e => ({...e, type: '支出'})), ...D.income.map(i => ({...i, type: '収入'}))].sort((a,b) => (a.date||'').localeCompare(b.date||''));
-  allItems.forEach(item => { csv += `${item.date},${item.type},${escapeCSV(item.cat)},${item.amount},${escapeCSV(item.note)}\n`; });
-  const bom = new Uint8Array([0xEF, 0xBB, 0xBF]), blob = new Blob([bom, csv], { type: 'text/csv' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-  a.href = url; a.download = `kakeibo_data_${ymd(new Date())}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-}
+function exportCSV() { const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`; let csv = "日付,区分,カテゴリ,金額,メモ\n"; const allItems = [...D.expenses.map(e => ({...e, type: '支出'})), ...D.income.map(i => ({...i, type: '収入'}))].sort((a,b) => (a.date||'').localeCompare(b.date||'')); allItems.forEach(item => { csv += `${item.date},${item.type},${escapeCSV(item.cat)},${item.amount},${escapeCSV(item.note)}\n`; }); const bom = new Uint8Array([0xEF, 0xBB, 0xBF]), blob = new Blob([bom, csv], { type: 'text/csv' }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `kakeibo_data_${ymd(new Date())}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); }
 function importCSV(event) {
   const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
   reader.onload = function(e) {
@@ -651,27 +598,20 @@ function importCSV(event) {
         else if (type === '収入') { D.income.push({ id: Date.now() + Math.random(), date, amount, cat, note }); if (!D.incCats.includes(cat)) D.incCats.push(cat); count++; }
       }
     }
-    save(); refresh(); alert(`CSVから ${count} 件のデータを読み込み、追加しました。`); event.target.value = '';
+    save(); refresh(); alert(`CSVから ${count} 件のデータを追加しました。`); event.target.value = '';
   }; reader.readAsText(file);
 }
 function clearAll(){ D={expenses:[],income:[],fixedIncome:[],fixedExpense:[], expCats:['食費','交通費','日用品','娯楽','医療','光熱費','通信費','その他'], incCats:['給与','副業','ボーナス','その他']}; save();refresh(); }
-function refresh(){
-  updateMetrics(); const key=curKey(); applyFixed(key);
-  const searchInp = document.getElementById('search-input'), monthCtrl = document.getElementById('exp-month-ctrl');
-  if(searchInp) searchInp.value = ''; if(monthCtrl) monthCtrl.style.display = 'flex';
-  renderItems('expense-list',D.expenses.filter(e=>(e.date||'').startsWith(key)),'exp'); renderItems('income-list',D.income.filter(i=>(i.date||'').startsWith(key)),'inc');
-  renderFixedLists(); populateSelects(); renderCatChips();
-}
+function refresh(){ updateMetrics(); const key=curKey(); applyFixed(key); const searchInp = document.getElementById('search-input'), monthCtrl = document.getElementById('exp-month-ctrl'); if(searchInp) searchInp.value = ''; if(monthCtrl) monthCtrl.style.display = 'flex'; renderItems('expense-list',D.expenses.filter(e=>(e.date||'').startsWith(key)),'exp'); renderItems('income-list',D.income.filter(i=>(i.date||'').startsWith(key)),'inc'); renderFixedLists(); populateSelects(); renderCatChips(); }
 function setToday() { const today = new Date(); document.getElementById('exp-date').value = ymd(today); document.getElementById('inc-date').value = ymd(today); }
 
 window.onload = () => {
   gapiLoaded(); gisLoaded(); setToday();
   document.getElementById('month-label').textContent = curMonth.getFullYear() + '年' + (curMonth.getMonth() + 1) + '月';
   refresh();
-  setTimeout(checkSyncAlert, 800); // 描画直後にバックアップ催促チェック
+  setTimeout(checkSyncAlert, 800);
 };
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setToday(); });
-
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
