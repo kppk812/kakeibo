@@ -123,7 +123,7 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 <div class="app">
 <div class="topbar">
   <div class="topbar-title">家計簿<span>.</span></div>
-  <div class="backup-status" id="backup-status"><i class="ti ti-cloud-upload"></i> 待機中</div>
+  <div class="backup-status" id="backup-status"><i class="ti ti-cloud-upload"></i> 未同期</div>
 </div>
 
 <div class="metrics-row">
@@ -246,6 +246,13 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 
 <div class="page" id="page-settings">
   <div class="section">
+    <div class="section-label">クラウド同期 (Google Drive)</div>
+    <div class="card">
+      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#0A56D1"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
+      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#146C2E"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
+    </div>
+  </div>
+  <div class="section">
     <div class="section-label">支出カテゴリ</div>
     <div class="card">
       <div id="exp-cat-chips" style="margin-bottom:12px"></div>
@@ -263,13 +270,6 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
         <input class="m3-input" type="text" id="new-inc-cat" placeholder="新しいカテゴリ名">
         <button class="cat-add-btn" onclick="addCat('inc')">追加</button>
       </div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-label">クラウド同期 (Google Drive)</div>
-    <div class="card">
-      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1; border-color:#0A56D1"><i class="ti ti-cloud-upload"></i> Driveへ手動バックアップ</button>
-      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E; border-color:#146C2E"><i class="ti ti-cloud-download"></i> Driveからデータを復元</button>
     </div>
   </div>
   <div class="section">
@@ -325,7 +325,7 @@ select.m3-input{appearance:auto;-webkit-appearance:auto}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 /* ================= Google Drive API 設定 ================= */
-const CLIENT_ID = 'YOUR_CLIENT_ID'; // ★ここを実際のクライアントIDに書き換える★
+const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 let tokenClient;
 let gapiInited = false;
@@ -348,12 +348,13 @@ function gisLoaded() {
   gisInited = true;
 }
 
-// 経過日数を計算する関数
+// 経過日数を計算する関数（ローカルタイムゾーンで厳密に計算）
 function getDiffDays(dateString) {
   if(!dateString) return null;
   const today = new Date();
   today.setHours(0,0,0,0);
-  const lastDate = new Date(dateString);
+  const parts = dateString.split('-');
+  const lastDate = new Date(parts[0], parts[1]-1, parts[2]);
   lastDate.setHours(0,0,0,0);
   return Math.floor((today - lastDate) / (1000 * 60 * 60 * 24));
 }
@@ -371,7 +372,7 @@ function updateBackupStatusText() {
       el.style.color = '#BA1A1A'; el.style.background = '#FFDAD6';
     } else {
       el.innerHTML = `<i class="ti ti-cloud-check"></i> ${diffDays}日`;
-      el.style.color = '#8F4E00'; el.style.background = '#FFF8E1'; // 1〜6日は黄色系
+      el.style.color = '#8F4E00'; el.style.background = '#FFF8E1'; // 1〜6日は黄色
     }
   } else {
     el.innerHTML = '<i class="ti ti-cloud-upload"></i> 未同期';
@@ -381,15 +382,20 @@ function updateBackupStatusText() {
 
 function checkSyncAlert() {
   if (localStorage.getItem('kakeibo_skip_sync_popup') === 'true') return;
-  const last = localStorage.getItem('kakeibo_last_backup');
-  let needsAlert = false;
-  if (!last) {
-    needsAlert = true;
-  } else {
-    const diffDays = getDiffDays(last);
-    if (diffDays >= 7) needsAlert = true;
+  
+  // アプリ利用開始日（アップデート日）を記録
+  let firstLaunch = localStorage.getItem('kakeibo_first_launch');
+  if (!firstLaunch) {
+    firstLaunch = ymd(new Date());
+    localStorage.setItem('kakeibo_first_launch', firstLaunch);
   }
-  if (needsAlert) {
+
+  const last = localStorage.getItem('kakeibo_last_backup');
+  // バックアップ履歴があればその日、なければ利用開始日を基準にする
+  const baseDate = last ? last : firstLaunch;
+  const diffDays = getDiffDays(baseDate);
+
+  if (diffDays >= 7) {
     openModal('sync-alert');
   }
 }
