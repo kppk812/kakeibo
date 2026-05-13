@@ -519,7 +519,7 @@ function addCat(type){
 function removeCat(type,name){ if(type==='exp')D.expCats=D.expCats.filter(c=>c!==name); else D.incCats=D.incCats.filter(c=>c!==name); save();populateSelects();renderCatChips(); }
 function addExpense(){
   const a=+document.getElementById('exp-amount').value, d=document.getElementById('exp-date').value, c=document.getElementById('exp-cat').value, n=document.getElementById('exp-note').value;
-  if(!a||!d){alert('金額と日付を入力してください');return}
+  if(!a||!d){alert('金額を入力してください');return}
   D.expenses.push({id:Date.now(),date:d,amount:a,cat:c,note:n}); document.getElementById('exp-amount').value='';document.getElementById('exp-note').value='';
   save(); refresh();
 }
