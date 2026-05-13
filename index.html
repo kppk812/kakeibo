@@ -278,7 +278,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 /* ================= Drive API ================= */
-const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com'; 
+const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 let tokenClient, gapiInited=false, gisInited=false;
 function gapiLoaded(){ gapi.load('client', ()=>{ gapi.client.init({}).then(()=>{ gapi.client.load('drive','v3'); gapiInited=true; }); }); }
@@ -438,6 +438,52 @@ window.onload=()=>{
   gapiLoaded(); gisLoaded(); setToday(); updateMonthLabels();
   refresh(); setTimeout(checkSyncAlert,800);
 };
+
+// スワイプによるタブ切り替え機能
+let touchstartX = 0;
+let touchendX = 0;
+let touchstartY = 0;
+let touchendY = 0;
+
+const appArea = document.querySelector('.app');
+
+appArea.addEventListener('touchstart', e => {
+  touchstartX = e.changedTouches[0].screenX;
+  touchstartY = e.changedTouches[0].screenY;
+}, {passive: true});
+
+appArea.addEventListener('touchend', e => {
+  touchendX = e.changedTouches[0].screenX;
+  touchendY = e.changedTouches[0].screenY;
+  handleSwipe(e.target);
+}, {passive: true});
+
+function handleSwipe(targetElement) {
+  // グラフ（canvas）の上でのスワイプは誤爆防止のため無視する
+  if (targetElement.tagName.toLowerCase() === 'canvas') return;
+
+  const deltaX = touchendX - touchstartX;
+  const deltaY = touchendY - touchstartY;
+
+  // 縦スクロールの動きの方が大きい場合、または横の移動距離が50px未満の場合は無視
+  if (Math.abs(deltaY) > Math.abs(deltaX) || Math.abs(deltaX) < 50) return;
+
+  const tabs = ['home', 'income', 'stats', 'settings'];
+  const activeBtn = document.querySelector('.nav-btn.active');
+  if (!activeBtn) return;
+  
+  const currentTabName = tabs.find(t => activeBtn.getAttribute('onclick').includes(t));
+  const currentIndex = tabs.indexOf(currentTabName);
+  const navBtns = document.querySelectorAll('.nav-btn');
+
+  if (deltaX < 0 && currentIndex < tabs.length - 1) {
+    // 左にフリック（右のタブへ進む）
+    showPage(tabs[currentIndex + 1], navBtns[currentIndex + 1]);
+  } else if (deltaX > 0 && currentIndex > 0) {
+    // 右にフリック（左のタブへ戻る）
+    showPage(tabs[currentIndex - 1], navBtns[currentIndex - 1]);
+  }
+}
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') setToday();
