@@ -1,1294 +1,708 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>workout</title>
-  
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#fafafa">
-  <link rel="apple-touch-icon" href="icon-192x192.png">
-  
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F6F8FC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<title>家計簿</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+<style>
+/* ================= CSS変数 (テーマカラー) ================= */
+:root, [data-theme="light"] {
+  --bg-color: #F6F8FC;
+  --text-main: #1F1F1F;
+  --text-sub: #444746;
+  --text-muted: #727775;
+  --card-bg: #FFFFFF;
+  --input-bg: #F0F4F9;
+  --input-focus: #E1E9F4;
+  --primary: #0A56D1;
+  --on-primary: #FFFFFF;
+  --primary-container: #D3E3FD;
+  --on-primary-container: #041E49;
+  --danger: #BA1A1A;
+  --danger-container: #FFDAD6;
+  --success: #146C2E;
+  --success-container: #E8F5E9;
+  --border-color: #E1E3E8;
+  --list-border: #F0F4F9;
+  --total-bar-bg: #F8FAFD;
+}
 
-    (function() {
-      const theme = localStorage.getItem('wt_theme') || 'auto';
-      const isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      if (isDark) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', '#000000');
-      }
-    })();
-  </script>
-  <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    ::-webkit-scrollbar { display: none; }
-    
-    /* ライトモード */
-    :root {
-      --bg-primary: #ffffff; --bg-secondary: #f4f4f5; --bg-app: #fafafa; --bg-nav: rgba(255, 255, 255, 0.92);
-      --text-primary: #09090b; --text-secondary: #52525b; --text-tertiary: #a1a1aa; --accent: #2563eb; --border: #e4e4e7;
-      --radius-md: 10px; --radius-lg: 14px; --radius-xl: 20px; --nav-height: 68px;
-      --color-rpe-low: #22c55e; --color-rpe-mid: #f97316; --color-rpe-high: #ef4444;
-      
-      --heat-0: #e4e4e7; --heat-1: #d6d3a5; --heat-2: #22c55e; --heat-3: #ef4444;
-      
-      --icon-chest-bg: #dbeafe; --icon-chest-fg: #2563eb; --icon-back-bg: #dcfce7; --icon-back-fg: #16a34a;
-      --icon-legs-bg: #fef08a; --icon-legs-fg: #ca8a04; --icon-shoulder-bg: #ffedd5; --icon-shoulder-fg: #ea580c;
-      --icon-arms-bg: #f3e8ff; --icon-arms-fg: #9333ea; --icon-core-bg: #fee2e2; --icon-core-fg: #dc2626;
-      --icon-full-bg: #f4f4f5; --icon-full-fg: #52525b;
-      
-      --pr-chest-bg: rgba(37, 99, 235, 0.05); --pr-back-bg: rgba(22, 163, 74, 0.05); --pr-legs-bg: rgba(202, 138, 4, 0.05);
-      --pr-shoulder-bg: rgba(234, 88, 12, 0.05); --pr-arms-bg: rgba(147, 51, 234, 0.05); --pr-core-bg: rgba(220, 38, 38, 0.05); --pr-full-bg: rgba(82, 82, 91, 0.05);
-      color-scheme: light;
-    }
+[data-theme="dark"] {
+  --bg-color: #121316;
+  --text-main: #E3E3E3;
+  --text-sub: #C4C7C5;
+  --text-muted: #8E9196;
+  --card-bg: #1E1F22;
+  --input-bg: #2A2B2F;
+  --input-focus: #35373C;
+  --primary: #A8C7FA;
+  --on-primary: #041E49;
+  --primary-container: #004A77;
+  --on-primary-container: #D3E3FD;
+  --danger: #FFB4AB;
+  --danger-container: #93000A;
+  --success: #81C995;
+  --success-container: #0F5223;
+  --border-color: #35373C;
+  --list-border: #2A2B2F;
+  --total-bar-bg: #1A1C1E;
+}
 
-    /* ダークモード */
-    :root[data-theme="dark"] {
-      --bg-primary: #18181b; --bg-secondary: #27272a; --bg-app: #000000; --bg-nav: rgba(24, 24, 27, 0.95);
-      --text-primary: #fafafa; --text-secondary: #a1a1aa; --text-tertiary: #52525b; --border: #3f3f46;
-      
-      --heat-0: #3f3f46; --heat-1: #717150; --heat-2: #22c55e; --heat-3: #ef4444;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-color: #121316;
+    --text-main: #E3E3E3;
+    --text-sub: #C4C7C5;
+    --text-muted: #8E9196;
+    --card-bg: #1E1F22;
+    --input-bg: #2A2B2F;
+    --input-focus: #35373C;
+    --primary: #A8C7FA;
+    --on-primary: #041E49;
+    --primary-container: #004A77;
+    --on-primary-container: #D3E3FD;
+    --danger: #FFB4AB;
+    --danger-container: #93000A;
+    --success: #81C995;
+    --success-container: #0F5223;
+    --border-color: #35373C;
+    --list-border: #2A2B2F;
+    --total-bar-bg: #1A1C1E;
+  }
+}
 
-      --icon-chest-bg: rgba(37, 99, 235, 0.15); --icon-chest-fg: #60a5fa; --icon-back-bg: rgba(22, 163, 74, 0.15); --icon-back-fg: #4ade80;
-      --icon-legs-bg: rgba(202, 138, 4, 0.15); --icon-legs-fg: #facc15; --icon-shoulder-bg: rgba(234, 88, 12, 0.15); --icon-shoulder-fg: #fb923c;
-      --icon-arms-bg: rgba(147, 51, 234, 0.15); --icon-arms-fg: #c084fc; --icon-core-bg: rgba(220, 38, 38, 0.15); --icon-core-fg: #f87171;
-      --icon-full-bg: rgba(82, 82, 91, 0.25); --icon-full-fg: #d4d4d8;
-      
-      --pr-chest-bg: rgba(37, 99, 235, 0.1); --pr-back-bg: rgba(22, 163, 74, 0.1); --pr-legs-bg: rgba(202, 138, 4, 0.1);
-      --pr-shoulder-bg: rgba(234, 88, 12, 0.1); --pr-arms-bg: rgba(147, 51, 234, 0.1); --pr-core-bg: rgba(220, 38, 38, 0.1); --pr-full-bg: rgba(82, 82, 91, 0.1);
-      color-scheme: dark;
-    }
+/* ダークモード時の影の調整 */
+[data-theme="dark"] .card, 
+[data-theme="dark"] .metric, 
+[data-theme="dark"] .month-ctrl,
+[data-theme="dark"] .modal {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card, 
+  :root:not([data-theme="light"]) .metric, 
+  :root:not([data-theme="light"]) .month-ctrl,
+  :root:not([data-theme="light"]) .modal {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+}
 
-    body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; margin: 0; padding: 0; background: var(--bg-app); color: var(--text-primary); padding-bottom: calc(var(--nav-height) + 24px); transition: background-color 0.3s ease, color 0.3s ease; overflow-x: hidden; }
-    .app-container { max-width: 680px; margin: 0 auto; padding: 1.25rem 1rem; width: 100%; overflow-x: hidden; }
-    
-    .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.75rem; margin-bottom: 1.25rem; }
-    .header h1 { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
-    
-    .sync-badge { display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .sync-badge:active { transform: scale(0.95); }
-    .sync-badge.safe { background: rgba(34, 197, 94, 0.1); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.2); }
-    .sync-badge.warning { background: rgba(249, 115, 22, 0.1); color: #ea580c; border: 1px solid rgba(249, 115, 22, 0.3); }
-    .sync-badge.danger { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .sync-badge.syncing { background: var(--bg-secondary); color: var(--text-secondary); opacity: 0.7; pointer-events: none; }
-    .sync-icon { width: 14px; height: 14px; }
-    .syncing .sync-icon { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
-    
-    .view { display: none; animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; }
-    .view.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+body{background:var(--bg-color);color:var(--text-main);font-size:15px; -webkit-tap-highlight-color:transparent; transition: background 0.3s, color 0.3s;}
+.app{max-width:680px;margin:0 auto;padding:0 0 100px}
+.topbar{padding:24px 20px 12px; display:flex; justify-content:space-between; align-items:center;}
+.topbar-title{font-size:28px;font-weight:800;color:var(--text-main);letter-spacing:-0.5px}
+.topbar-title span{color:var(--primary)}
+.backup-status{font-size:13px; font-weight:800; color:var(--text-sub); background:var(--input-focus); padding:6px 14px; border-radius:999px; display:flex; align-items:center; gap:4px;}
 
-    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: var(--bg-nav); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 20px rgba(0,0,0,0.02); transition: background-color 0.3s ease; }
-    .nav-btn { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: none; background: transparent; color: var(--text-tertiary); font-size: 10px; font-weight: 700; cursor: pointer; transition: color 0.2s, transform 0.1s; }
-    .nav-btn:active { transform: scale(0.92); }
-    .nav-btn.active { color: var(--text-primary); }
-    .nav-icon { margin-bottom: 2px; }
+/* メトリクス */
+.metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 20px}
+.metric{background:var(--card-bg);border-radius:28px;padding:20px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.04); transition: background 0.3s, box-shadow 0.3s;}
+.metric-label{font-size:12px;color:var(--text-sub);margin-bottom:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.metric-val{font-size:24px;font-weight:800;color:var(--text-main)}
+.metric-val.exp{color:var(--danger)}
+.metric-val.bal.pos{color:var(--success)}
+.metric-val.bal.neg{color:var(--danger)}
 
-    .card { background: var(--bg-primary); border-radius: var(--radius-xl); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border); transition: background-color 0.3s ease, border-color 0.3s ease; }
-    .label { font-size: 13px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 8px; }
-    input[type="text"], input[type="date"], input[type="number"], select { width: 100%; font-size: 16px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg-secondary); font-weight: 700; color: var(--text-primary); appearance: none; -webkit-appearance: none; outline: none; box-shadow: none; transition: background-color 0.3s ease, border-color 0.3s ease; margin: 0; }
-    input[type="text"]:focus, input[type="date"]:focus, input[type="number"]:focus, select:focus { border-color: var(--text-tertiary); }
-    
-    .suggest-list { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 280px; overflow-y: auto; z-index: 100; display: none; }
-    .suggest-item { padding: 12px 16px; font-size: 15px; font-weight: 700; color: var(--text-primary); border-bottom: 1px solid var(--bg-secondary); cursor: pointer; display: flex; align-items: center; gap: 14px; }
-    .suggest-item:last-child { border-bottom: none; }
-    .suggest-item:active { background: var(--bg-secondary); }
-    
-    .cat-icon-wrapper { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background-color 0.3s ease; }
-    .cat-icon-wrapper.chest { background: var(--icon-chest-bg); color: var(--icon-chest-fg); }
-    .cat-icon-wrapper.back { background: var(--icon-back-bg); color: var(--icon-back-fg); }
-    .cat-icon-wrapper.legs { background: var(--icon-legs-bg); color: var(--icon-legs-fg); }
-    .cat-icon-wrapper.shoulder { background: var(--icon-shoulder-bg); color: var(--icon-shoulder-fg); }
-    .cat-icon-wrapper.arms { background: var(--icon-arms-bg); color: var(--icon-arms-fg); }
-    .cat-icon-wrapper.core { background: var(--icon-core-bg); color: var(--icon-core-fg); }
-    .cat-icon-wrapper.full { background: var(--icon-full-bg); color: var(--icon-full-fg); }
+/* ナビ */
+.nav{display:flex;gap:8px;margin:12px 20px 24px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.nav-btn{flex:1;min-width:70px;padding:12px 0;border-radius:24px;border:none;background:var(--card-bg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-muted);font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.02);transition:all 0.3s cubic-bezier(0.2,0,0,1)}
+.nav-btn i{font-size:24px;color:var(--text-muted);}
+.nav-btn.active{background:var(--primary-container);color:var(--on-primary-container);box-shadow:none;transform:scale(1.02)}
+.nav-btn.active i{color:var(--on-primary-container)}
 
-    .suggest-create-btn { padding: 16px; font-size: 15px; font-weight: 700; color: var(--accent); cursor: pointer; display: flex; align-items: center; gap: 10px; background: var(--icon-chest-bg); }
+/* ページ */
+.page{display:none;animation:fade 0.3s ease}.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.section{padding:0 20px;margin-bottom:24px}
+.section-label{font-size:13px;font-weight:800;color:var(--text-sub);letter-spacing:0.5px;margin-bottom:12px;text-transform:uppercase}
+.card{background:var(--card-bg);border-radius:28px;padding:20px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.04); transition: background 0.3s, box-shadow 0.3s;}
 
-    /* モーダル共通 */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
-    .modal-overlay.show { opacity: 1; visibility: visible; }
-    .modal-content { background: var(--bg-primary); width: 100%; max-width: 400px; border-radius: var(--radius-xl); padding: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);}
-    .modal-overlay.show .modal-content { transform: scale(1); }
+/* 入力と検索 */
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.cat-input-row{display:flex;gap:12px;margin-bottom:12px}
+.cat-input-row .m3-input{flex:1}
+.m3-input{width:100%;padding:16px 18px;border:none;border-radius:16px;font-size:15px;background:var(--input-bg);color:var(--text-main);outline:none;appearance:none;transition:background 0.2s, box-shadow 0.2s;}
+.m3-input:focus{background:var(--input-focus);box-shadow:inset 0 0 0 2px var(--primary)}
+.m3-input::placeholder{color:var(--text-muted)}
 
-    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1.25rem; }
-    .cat-btn { padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary); font-size: 14px; font-weight: 700; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: transform 0.1s, background 0.2s; }
-    .cat-btn:active { transform: scale(0.96); background: var(--border); }
+/* セレクトボックスのカスタムデザイン */
+select.m3-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23727775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+[data-theme="dark"] select.m3-input,
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) select.m3-input {
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%238E9196" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  }
+}
 
-    .quick-control { display: flex; align-items: center; background: var(--bg-secondary); border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); transition: border 0.2s; height: 54px; }
-    .quick-control:focus-within { border-color: var(--text-tertiary); }
-    .quick-control button { width: 54px; height: 100%; border: none; background: transparent; font-size: 26px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 300; transition: background 0.1s;}
-    .quick-control button:active { background: rgba(0,0,0,0.05); }
-    :root[data-theme="dark"] .quick-control button:active { background: rgba(255,255,255,0.05); }
-    .quick-control input { flex: 1; width: 100%; height: 100%; font-size: 22px; font-weight: 800; text-align: center; border: none; background: transparent; outline: none; color: var(--text-primary); padding: 0; }
-    
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    
-    .rpe-container { display: flex; align-items: center; gap: 16px; background: var(--bg-secondary); padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 24px; border: 1px solid var(--border); transition: background-color 0.3s ease; }
-    .rpe-container input[type="range"] { flex: 1; height: 6px; border-radius: 3px; outline: none; background: var(--border); transition: accent-color 0.2s; accent-color: var(--color-rpe-low); margin: 0; }
-    .rpe-val { font-size: 20px; font-weight: 800; width: 36px; text-align: right; color: var(--text-primary); }
-    
-    .btn-primary { width: 100%; padding: 18px; font-size: 17px; font-weight: 800; border-radius: var(--radius-lg); border: none; background: var(--text-primary); color: var(--bg-app); cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1); display: flex; justify-content: center; align-items: center; gap: 10px; }
-    .btn-primary:active { transform: scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-    
-    .log-item { display: flex; flex-direction: column; gap: 8px; padding: 16px 20px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-xl); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-    .log-title { font-size: 15px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px; }
-    .set-badge { font-size: 12px; font-weight: 800; color: var(--bg-primary); background: var(--text-secondary); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-    
-    .pr-badge { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; background: #16a34a; color: #ffffff; display: flex; align-items: center; gap: 3px; letter-spacing: 0.5px;}
-    :root[data-theme="dark"] .pr-badge { background: #22c55e; color: #000000; }
-    
-    .action-btn { background: transparent; border: none; color: var(--text-tertiary); padding: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;}
-    .action-btn:active { background: var(--bg-secondary); }
-    
-    .pr-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .pr-sort-select { padding: 8px 12px; font-size: 13px; font-weight: 700; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-primary); outline: none; }
-    .pr-view-toggle { display: flex; background: var(--bg-secondary); border-radius: var(--radius-md); padding: 4px; gap: 4px; border: 1px solid var(--border); }
-    .pr-view-btn { padding: 6px; border: none; background: transparent; border-radius: 6px; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-    .pr-view-btn.active { background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.search-wrapper { position: relative; margin-bottom: 16px; }
+.search-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 20px; }
+.search-wrapper input { padding-left: 48px; border-radius: 999px; }
 
-    .pr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
-    .pr-card { border-radius: var(--radius-xl); padding: 1.5rem; border: 1px solid transparent; transition: transform 0.1s, background-color 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02); cursor: pointer; }
-    .pr-card:active { transform: scale(0.97); }
+/* ボタン */
+.fab{width:100%;padding:18px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 6px 16px rgba(10,86,209,0.25);transition:all 0.2s}
+.fab:active{transform:scale(0.96)}
+.del-btn{background:var(--input-bg);border:none;color:var(--text-sub);cursor:pointer;width:36px;height:36px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;transition:background 0.2s;position:relative;z-index:2;}
+.del-btn:active{background:var(--input-focus)}
+.add-fixed-btn{display:flex;align-items:center;gap:8px;color:var(--primary);background:var(--input-bg);border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;justify-content:center}
+.danger-btn{padding:16px;border-radius:999px;border:none;background:var(--danger-container);color:var(--danger);cursor:pointer;font-size:15px;font-weight:800;width:100%}
+.action-btn{padding:16px;border-radius:999px;border:none;background:var(--input-bg);color:var(--text-main);cursor:pointer;font-size:15px;font-weight:800;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.cat-add-btn{border-radius:999px;font-weight:800;font-size:15px;padding:0 24px;border:none;background:var(--primary-container);color:var(--on-primary-container);cursor:pointer;white-space:nowrap;transition:background 0.2s}
+.cat-add-btn:active{background:var(--input-focus)}
+.btn-ghost{flex:1;padding:16px;border-radius:999px;border:none;background:var(--input-bg);cursor:pointer;font-size:15px;font-weight:700;color:var(--text-main)}
+.btn-filled{flex:1;padding:16px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);cursor:pointer;font-size:15px;font-weight:800}
 
-    .pr-list { display: flex; flex-direction: column; gap: 12px; }
-    .pr-list-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-radius: var(--radius-xl); border: 1px solid transparent; transition: transform 0.1s, background-color 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.01); cursor: pointer; }
-    .pr-list-item:active { transform: scale(0.98); }
-    .pr-list-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
-    .pr-list-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .pr-list-name { font-size: 14px; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pr-list-detail { font-size: 12px; font-weight: 700; color: var(--text-tertiary); display: flex; gap: 8px; }
-    .pr-list-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-    .pr-list-weight { font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; text-align: right; min-width: 50px; }
-    .pr-list-weight span { font-size: 13px; color: var(--text-secondary); font-weight: 700; margin-left: 2px; }
-    .pr-list-graph { width: 60px; height: 30px; }
-    
-    #last-record { background: var(--bg-secondary); padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 24px; border-left: 4px solid var(--text-primary); display: none; align-items: center; justify-content: space-between; }
+/* リストアイテム */
+.list-item{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--list-border)}
+.list-item:last-child{border-bottom:none}
+.item-icon{width:48px;height:48px;border-radius:24px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--primary);flex-shrink:0}
+.item-body{flex:1;min-width:0;border-radius:12px;padding:4px;transition:background 0.2s;position:relative;z-index:1;}
+.item-body.editable:active{background:var(--input-bg)}
+.item-cat{font-size:16px;font-weight:700;color:var(--text-main);display:flex;align-items:center}
+.item-note{font-size:13px;color:var(--text-sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-right{text-align:right;flex-shrink:0}
+.item-amount{font-size:17px;font-weight:800}
+.item-amount.e{color:var(--danger)}
+.item-amount.i{color:var(--success)}
+.item-date{font-size:12px;color:var(--text-muted);margin-top:2px;font-weight:600}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;background:var(--input-bg);color:var(--text-main);margin-left:8px}
 
-    .body-map-container { display: flex; justify-content: space-around; padding: 1rem 0; margin-bottom: 1rem; }
-    .body-figure { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .body-label { font-size: 13px; font-weight: 800; color: var(--text-tertiary); letter-spacing: 1px; }
-    .body-part { transition: fill 0.5s ease; stroke: var(--bg-primary); stroke-width: 2px; }
-    .heatmap-legend { display: flex; justify-content: center; gap: 16px; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 2rem; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-color { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--border); }
-    .advice-box { background: var(--bg-secondary); border-left: 4px solid var(--accent); padding: 1.25rem; border-radius: var(--radius-lg); font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.6; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 14px; transition: background-color 0.3s ease; }
-    .stat-bar-container { margin-bottom: 14px; }
-    .stat-bar-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-secondary); }
-    .stat-bar-bg { width: 100%; height: 10px; background: var(--bg-secondary); border-radius: 5px; overflow: hidden; }
-    .stat-bar-fill { height: 100%; border-radius: 5px; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-    
-    .settings-list { display: flex; flex-direction: column; gap: 16px; }
-    .settings-btn { width: 100%; padding: 18px 20px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-primary); display: flex; align-items: center; gap: 14px; cursor: pointer; text-align: left; transition: transform 0.1s, background-color 0.2s; }
-    .settings-btn svg { flex-shrink: 0; }
-    .settings-btn span { flex: 1; line-height: 1.3; font-size: 15px; font-weight: 800; }
-    .settings-btn:active { transform: scale(0.98); background: var(--border); }
-    
-    .segment-group { display: flex; gap: 8px; background: var(--bg-secondary); padding: 6px; border-radius: var(--radius-lg); border: 1px solid var(--border); }
-    .segment-btn { flex: 1; padding: 14px 0; font-size: 14px; font-weight: 800; border: none; background: transparent; color: var(--text-tertiary); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; }
-    .segment-btn.active { background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.fixed-total-bar{display:flex;justify-content:space-between;align-items:center;padding:16px;background:var(--total-bar-bg);border-radius:16px;margin-top:16px;border:none;box-shadow:inset 0 0 0 1px var(--border-color)}
+.fixed-total-label{font-size:13px;font-weight:700;color:var(--text-sub)}
+.fixed-total-val{font-size:18px;font-weight:800;color:var(--text-main)}
+.fixed-row{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--list-border)}
+.fixed-row:last-child{border-bottom:none}
+.fixed-label{font-size:16px;font-weight:700;color:var(--text-main)}
+.fixed-sub{font-size:13px;color:var(--text-sub);margin-top:2px}
 
-    .google-btn { width: 100%; padding: 16px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-lg); font-size: 15px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; margin-bottom: 12px; transition: background 0.2s; }
-    .google-btn:active { background: var(--bg-secondary); }
+/* 月次コントロール */
+.month-ctrl{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;background:var(--card-bg);padding:8px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,0.03)}
+.month-ctrl-center{position:relative;display:flex;align-items:center;justify-content:center;flex:1;}
+.month-ctrl-center span{font-size:18px;font-weight:800;color:var(--text-main)}
+.month-picker{position:absolute;opacity:0;top:0;left:0;width:100%;height:100%;cursor:pointer;}
+.arrow-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--input-bg);color:var(--text-main);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.arrow-btn:active{background:var(--input-focus)}
 
-    /* ボトムシート（履歴詳細） */
-    .bottom-sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2500; display: flex; align-items: flex-end; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-    .bottom-sheet.show { opacity: 1; visibility: visible; }
-    .bottom-sheet-content { background: var(--bg-app); width: 100%; height: 85vh; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); }
-    .bottom-sheet.show .bottom-sheet-content { transform: translateY(0); }
-    
-    /* アコーディオン履歴 */
-    details { background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-    summary { padding: 14px 16px; font-weight: 800; font-size: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: var(--bg-primary); list-style: none; user-select: none; }
-    summary::-webkit-details-marker { display: none; }
-    summary::after { content: '▼'; font-size: 10px; color: var(--text-tertiary); transition: transform 0.2s; margin-left: 8px; }
-    details[open] summary::after { transform: rotate(180deg); }
-    .details-content { padding: 0; border-top: 1px solid var(--bg-secondary); }
+/* 集計タブ */
+.tab-pills{display:flex;gap:8px;margin-bottom:20px;background:none;padding:0}
+.pill{flex:1;padding:12px;border-radius:999px;border:1px solid var(--border-color);background:var(--card-bg);cursor:pointer;font-size:14px;font-weight:700;color:var(--text-sub);text-align:center;transition:all 0.2s}
+.pill.active{background:var(--primary-container);color:var(--on-primary-container);border-color:var(--primary-container)}
+.stat-tab{display:none;animation:fade 0.3s ease}.stat-tab.active{display:block}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:15px;font-weight:600}
+.pie-section{display:grid;grid-template-columns:160px 1fr;gap:24px;align-items:center}
+@media (max-width: 400px) { .pie-section{grid-template-columns: 1fr; justify-items: center; gap: 16px;} }
+.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;font-weight:600;color:var(--text-main)}
+.legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
 
-    svg { display: block; }
-  </style>
+/* モーダル */
+.modal-wrap{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:100}
+.modal-wrap.open{display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--card-bg);border-radius:32px;padding:28px;width:100%;max-width:360px;box-shadow:0 24px 48px rgba(0,0,0,0.3); transition: background 0.3s, box-shadow 0.3s;}
+.modal-head{font-size:22px;font-weight:800;margin-bottom:20px;color:var(--text-main)}
+.modal-foot{display:flex;gap:12px;margin-top:24px}
+.cat-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;background:var(--input-bg);font-size:14px;font-weight:700;color:var(--text-main);margin:4px;border:1px solid var(--border-color)}
+.cat-chip .x{font-size:16px;color:var(--text-muted);cursor:pointer;padding-left:4px}
+</style>
 </head>
 <body>
-  <div class="app-container">
-    <div class="header">
-      <h1>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 14.4l-4.8-4.8M6.5 10.5l-3-3a2 2 0 112.8-2.8l3 3M17.5 13.5l3 3a2 2 0 11-2.8 2.8l-3-3M8 12l4-4M12 16l4-4M10 14l4-4"/></svg>
-        workout
-      </h1>
-      <div id="sync-badge" class="sync-badge safe" onclick="triggerManualSync()">
-        <svg class="sync-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-        <span id="sync-badge-text">同期済</span>
-      </div>
-    </div>
+<div class="app">
+<div class="topbar">
+  <div class="topbar-title">家計簿<span>.</span></div>
+  <div class="backup-status" id="backup-status"><i class="ti ti-cloud-upload"></i> 未同期</div>
+</div>
 
-    <div id="view-log" class="view active">
-      <div class="card">
-        <div style="margin-bottom: 24px;">
-          <div style="margin-bottom: 16px;">
-            <label class="label">日付</label>
-            <input type="date" id="record-date" onchange="updateUI()">
-          </div>
-          <div id="suggest-wrapper" style="position: relative;">
-            <label class="label" style="display:flex; justify-content:space-between;">
-              <span>種目検索</span>
-              <span style="font-size:11px; color:var(--text-tertiary); font-weight:600;">タップでクリア・部位・ひらがな・英字</span>
-            </label>
-            <input type="text" id="exercise-input" autocomplete="off" placeholder="例: べんち、胸、squat" oninput="handleSuggest()" onfocus="this.value=''; handleSuggest()">
-            <div id="suggest-list" class="suggest-list"></div>
-          </div>
-        </div>
+<div class="metrics-row">
+  <div class="metric"><div class="metric-label">今月の支出</div><div class="metric-val exp" id="m-exp">¥0</div></div>
+  <div class="metric"><div class="metric-label">今月の収支</div><div class="metric-val bal" id="m-bal">¥0</div></div>
+</div>
 
-        <div id="last-record">
-          <span style="font-size:12px;color:var(--text-secondary);font-weight:700;" id="last-record-date">前回の記録</span>
-          <span style="font-size:16px;font-weight:800;color:var(--text-primary);" id="last-record-val"></span>
-        </div>
+<div class="nav">
+  <button class="nav-btn active" onclick="showPage('home',this)"><i class="ti ti-wallet"></i>支出</button>
+  <button class="nav-btn" onclick="showPage('income',this)"><i class="ti ti-trending-up"></i>収入</button>
+  <button class="nav-btn" onclick="showPage('stats',this)"><i class="ti ti-chart-pie"></i>集計</button>
+  <button class="nav-btn" onclick="showPage('settings',this)"><i class="ti ti-adjustments"></i>設定</button>
+</div>
 
-        <div class="grid-2">
-          <div>
-            <label class="label">重量 (kg) <span style="font-weight:500;font-size:11px;color:var(--text-tertiary);">※0で自重</span></label>
-            <div class="quick-control">
-              <button onclick="adjustVal('weight', -2.5)">-</button>
-              <input type="number" id="weight" value="60" step="0.5" oninput="updateInputState()">
-              <button onclick="adjustVal('weight', 2.5)">+</button>
-            </div>
-          </div>
-          <div>
-            <label class="label">レップ数</label>
-            <div class="quick-control">
-              <button onclick="adjustVal('reps', -1)">-</button>
-              <input type="number" id="reps" value="10" oninput="updateInputState()">
-              <button onclick="adjustVal('reps', 1)">+</button>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <label class="label" style="margin:0;">RPE (キツさ)</label>
-            <span id="rpe-label" style="font-size:13px; font-weight:700; color:var(--text-tertiary);">高負荷</span>
-          </div>
-          <div class="rpe-container">
-            <input type="range" id="rpe" min="5" max="10" step="0.5" value="8" oninput="updateInputState()">
-            <span class="rpe-val" id="rpe-display">8</span>
-          </div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-          <div style="font-size:13px; font-weight:700; color:var(--text-secondary);">
-            推定1RM: <strong id="onerm-display" style="font-size:18px; color:var(--text-primary);">80</strong> <span id="onerm-unit">kg</span>
-          </div>
-          <div id="pr-hint" style="font-size:13px; color:#16a34a; font-weight:800; display:none; align-items:center; gap:4px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            PR更新ペース！
-          </div>
-        </div>
-        
-        <button class="btn-primary" onclick="addLog()" id="record-btn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span id="record-btn-text">第1セットを記録</span>
-        </button>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding:0 4px;">
-        <h3 style="font-size:16px; font-weight:800; margin:0; color:var(--text-secondary);">本日のログ</h3>
-        <span id="today-date-display" style="font-size:13px; font-weight:700; color:var(--text-tertiary);"></span>
-      </div>
-      <div id="today-logs"></div>
-      
-      <div id="past-logs"></div>
-    </div>
-
-    <div id="view-history" class="view">
-      <div id="pr-container"></div>
-    </div>
-
-    <div id="history-detail-modal" class="bottom-sheet">
-      <div class="bottom-sheet-content">
-        <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-          <h3 id="hd-title" style="margin:0; font-size:18px; font-weight:800; color:var(--text-primary); text-overflow:ellipsis; white-space:nowrap; overflow:hidden; flex:1; padding-right:10px;">種目名</h3>
-          <div id="hd-header-actions" style="display:flex; gap:8px;"></div>
-        </div>
-        <div style="flex:1; overflow-y:auto; padding:1.5rem;">
-          <div id="hd-graph" style="margin-bottom:2rem; display:none;"></div>
-          <div id="hd-list"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="view-analysis" class="view">
-      <div class="card">
-        <h2 style="font-size:18px; font-weight:800; margin:0 0 16px 0; text-align:center; color:var(--text-primary);">
-          部位別バランス分析<br>
-          <span id="analysis-subtitle" style="font-size:13px; font-weight:600; color:var(--text-tertiary);">（直近30日間の適正ボリューム達成率）</span>
-        </h2>
-        
-        <div class="segment-group" style="margin-bottom: 24px;">
-          <button id="period-btn-7" class="segment-btn" onclick="setAnalysisPeriod('7')">1週間</button>
-          <button id="period-btn-30" class="segment-btn active" onclick="setAnalysisPeriod('30')">30日間</button>
-          <button id="period-btn-365" class="segment-btn" onclick="setAnalysisPeriod('365')">1年</button>
-        </div>
-        
-        <div class="body-map-container" id="body-map-render"></div>
-
-        <div class="heatmap-legend">
-          <div class="legend-item"><div class="legend-color" style="background:var(--heat-3);"></div>オーバー</div>
-          <div class="legend-item"><div class="legend-color" style="background:var(--heat-2);"></div>適正量</div>
-          <div class="legend-item"><div class="legend-color" style="background:var(--heat-1);"></div>不足</div>
-          <div class="legend-item"><div class="legend-color" style="background:var(--heat-0);"></div>なし</div>
-        </div>
-
-        <div id="analysis-advice" class="advice-box"></div>
-
-        <div id="analysis-bars" style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;"></div>
-      </div>
-    </div>
-
-    <div id="view-settings" class="view">
-      <div class="card">
-        <h2 style="font-size:18px; font-weight:800; margin:0 0 24px 0; color:var(--text-primary);">設定</h2>
-        
-        <h3 style="font-size:15px; font-weight:800; margin:0 0 14px 0; color:var(--text-secondary);">外観テーマ</h3>
-        <div class="segment-group" style="margin-bottom:32px;">
-          <button class="segment-btn" id="theme-btn-light" onclick="setTheme('light')">ライト</button>
-          <button class="segment-btn" id="theme-btn-dark" onclick="setTheme('dark')">ダーク</button>
-          <button class="segment-btn" id="theme-btn-auto" onclick="setTheme('auto')">端末に合わせる</button>
-        </div>
-
-        <h3 style="font-size:15px; font-weight:800; margin:0 0 14px 0; color:var(--text-secondary);">Google Drive バックアップ</h3>
-        <div style="margin-bottom: 32px;">
-          <div id="gdrive-login-area">
-            <button class="google-btn" onclick="handleAuthClick()">
-              <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-              <span>Googleアカウントでログイン</span>
-            </button>
-          </div>
-          <div id="gdrive-sync-area" style="display:none;">
-            <p style="font-size:14px; font-weight:700; color:#16a34a; margin-bottom:12px; display:flex; align-items:center; gap:6px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              アカウント接続済み
-            </p>
-            <button class="settings-btn" onclick="syncToDrive()" style="margin-bottom:12px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>クラウドへバックアップ</span>
-            </button>
-            <button class="settings-btn" onclick="syncFromDrive()">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>クラウドから復元（上書き）</span>
-            </button>
-          </div>
-        </div>
-
-        <h3 style="font-size:15px; font-weight:800; margin:0 0 14px 0; color:var(--text-secondary);">ローカルデータ管理</h3>
-        <div class="settings-list">
-          <div>
-            <button class="settings-btn" onclick="exportDataLocal()">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>ファイルを出力 (JSON)</span>
-            </button>
-          </div>
-          <div>
-            <input type="file" id="import-file" style="display:none;" accept=".json" onchange="importDataLocal(event)">
-            <button class="settings-btn" onclick="document.getElementById('import-file').click()">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>ファイルから復元</span>
-            </button>
-          </div>
-          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border);">
-            <button class="settings-btn" onclick="resetData()" style="color:var(--color-rpe-high); border-color:var(--border); background:transparent;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              <span>全データを初期化</span>
-            </button>
-          </div>
-        </div>
-      </div>
+<div class="page active" id="page-home">
+  <div class="section">
+    <div class="card">
+      <div class="input-row"><input class="m3-input" type="number" id="exp-amount" placeholder="金額" inputmode="numeric"><input class="m3-input" type="date" id="exp-date"></div>
+      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="exp-cat" onchange="handleCatChange(this, 'exp')"></select><input class="m3-input" type="text" id="exp-note" placeholder="メモ"></div>
+      <button class="fab" onclick="addExpense()">支出を記録</button>
     </div>
   </div>
-
-  <div id="create-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="margin:0 0 16px 0; font-size:18px; font-weight:800;">新しい種目の作成</h3>
-      <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px;">「<span id="modal-ex-name" style="font-weight:800; color:var(--text-primary);"></span>」の主働筋（メインの部位）を選択してください。</p>
-      <div class="cat-grid" id="modal-cat-grid"></div>
-      <div style="margin-top:24px; text-align:right;">
-        <button onclick="closeModal()" style="padding:12px 20px; background:transparent; border:none; font-size:15px; font-weight:800; color:var(--text-secondary); cursor:pointer;">キャンセル</button>
+  <div class="section">
+    <div class="search-wrapper"><i class="ti ti-search"></i><input type="text" id="exp-search" class="m3-input" placeholder="支出履歴を検索" oninput="handleSearch('exp')"></div>
+    <div class="month-ctrl">
+      <button class="arrow-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+      <div class="month-ctrl-center">
+        <span class="month-label"></span>
+        <input type="month" class="month-picker" onchange="jumpMonth(this.value)" onclick="if(this.showPicker) this.showPicker();">
       </div>
+      <button class="arrow-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="card"><div id="exp-list"></div></div>
+  </div>
+</div>
+
+<div class="page" id="page-income">
+  <div class="section">
+    <div class="card">
+      <div class="input-row"><input class="m3-input" type="number" id="inc-amount" placeholder="金額" inputmode="numeric"><input class="m3-input" type="date" id="inc-date"></div>
+      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="inc-cat" onchange="handleCatChange(this, 'inc')"></select><input class="m3-input" type="text" id="inc-note" placeholder="メモ"></div>
+      <button class="fab" onclick="addIncome()">収入を記録</button>
     </div>
   </div>
+  <div class="section">
+    <div class="search-wrapper"><i class="ti ti-search"></i><input type="text" id="inc-search" class="m3-input" placeholder="収入履歴を検索" oninput="handleSearch('inc')"></div>
+    <div class="month-ctrl">
+      <button class="arrow-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+      <div class="month-ctrl-center">
+        <span class="month-label"></span>
+        <input type="month" class="month-picker" onchange="jumpMonth(this.value)" onclick="if(this.showPicker) this.showPicker();">
+      </div>
+      <button class="arrow-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="card"><div id="inc-list"></div></div>
+  </div>
+</div>
 
-  <div id="edit-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="margin:0 0 16px 0; font-size:18px; font-weight:800;">記録の編集</h3>
-      <label class="label">日付</label>
-      <input type="date" id="edit-date" style="margin-bottom:16px;">
-      <label class="label">種目</label>
-      <select id="edit-exercise" style="margin-bottom:16px;"></select>
-      
-      <div class="grid-2" style="margin-bottom: 16px;">
-        <div>
-          <label class="label">セット数</label>
-          <div class="quick-control" style="height: 48px;">
-            <button onclick="adjustEditVal('set', -1)" style="font-size:20px;">-</button>
-            <input type="number" id="edit-set" min="1" style="font-size:18px;">
-            <button onclick="adjustEditVal('set', 1)" style="font-size:20px;">+</button>
-          </div>
-        </div>
-        <div>
-          <label class="label">重量 (kg) <span style="font-weight:500;font-size:10px;">※0で自重</span></label>
-          <div class="quick-control" style="height: 48px;">
-            <button onclick="adjustEditVal('weight', -2.5)" style="font-size:20px;">-</button>
-            <input type="number" id="edit-weight" step="0.5" style="font-size:18px;">
-            <button onclick="adjustEditVal('weight', 2.5)" style="font-size:20px;">+</button>
-          </div>
-        </div>
+<div class="page" id="page-stats">
+  <div class="section">
+    <div class="month-ctrl">
+      <button class="arrow-btn" onclick="changeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+      <div class="month-ctrl-center">
+        <span class="month-label"></span>
+        <input type="month" class="month-picker" onchange="jumpMonth(this.value)" onclick="if(this.showPicker) this.showPicker();">
       </div>
-      
-      <div class="grid-2" style="margin-bottom: 16px;">
-        <div>
-          <label class="label">レップ数</label>
-          <div class="quick-control" style="height: 48px;">
-            <button onclick="adjustEditVal('reps', -1)" style="font-size:20px;">-</button>
-            <input type="number" id="edit-reps" min="1" style="font-size:18px;">
-            <button onclick="adjustEditVal('reps', 1)" style="font-size:20px;">+</button>
-          </div>
+      <button class="arrow-btn" onclick="changeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="pie-section">
+        <div style="position:relative; width:160px; height:160px;">
+          <canvas id="top-pie-chart" width="160" height="160"></canvas>
+          <div id="pie-center-label" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:22px; font-weight:800; color:var(--text-main); pointer-events:none;"></div>
         </div>
-        <div>
-          <label class="label">RPE</label>
-          <div class="quick-control" style="height: 48px;">
-            <button onclick="adjustEditVal('rpe', -0.5)" style="font-size:20px;">-</button>
-            <input type="number" id="edit-rpe" step="0.5" min="5" max="10" style="font-size:18px;">
-            <button onclick="adjustEditVal('rpe', 0.5)" style="font-size:20px;">+</button>
-          </div>
-        </div>
-      </div>
-      
-      <div style="display:flex; justify-content:space-between; margin-top:24px;">
-        <button onclick="closeEditModal()" style="padding:12px 20px; background:transparent; border:none; font-size:15px; font-weight:800; color:var(--text-secondary); cursor:pointer;">キャンセル</button>
-        <button onclick="saveEditLog()" style="padding:12px 24px; background:var(--accent); border:none; border-radius:var(--radius-md); font-size:15px; font-weight:800; color:#fff; cursor:pointer;">保存する</button>
+        <div id="top-pie-legend"></div>
       </div>
     </div>
+    <div class="tab-pills">
+      <button class="pill active" onclick="switchStat('category',this)">詳細</button>
+      <button class="pill" onclick="switchStat('monthly',this)">月次</button>
+      <button class="pill" onclick="switchStat('yearly',this)">年間</button>
+    </div>
+    <div class="stat-tab active" id="st-category"><div class="card"><div id="cat-detail-list"></div></div></div>
+    <div class="stat-tab" id="st-monthly"><div class="card"><canvas id="monthly-chart" height="190"></canvas></div></div>
+    <div class="stat-tab" id="st-yearly">
+      <div class="metrics-row" style="padding:0 0 12px"><div class="metric"><div class="metric-label">年間収入</div><div class="metric-val" style="color:var(--success);" id="y-inc">¥0</div></div><div class="metric"><div class="metric-label">年間支出</div><div class="metric-val exp" id="y-exp">¥0</div></div></div>
+      <div class="card"><canvas id="yearly-chart" height="190"></canvas></div>
+    </div>
   </div>
+</div>
 
-  <div id="edit-custom-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h3 style="margin:0 0 16px 0; font-size:18px; font-weight:800;">カスタム種目の編集</h3>
-      <p style="font-size:12px; color:var(--text-tertiary); margin-bottom:16px;">名前や部位を変更すると、過去の記録もすべて自動で更新されます。</p>
-      
-      <label class="label">種目名</label>
-      <input type="text" id="edit-custom-name" style="margin-bottom:16px;" autocomplete="off">
-      
-      <label class="label">メインの部位</label>
-      <select id="edit-custom-cat" style="margin-bottom:16px;">
-        <option value="胸">胸</option>
-        <option value="背中">背中</option>
-        <option value="脚">脚</option>
-        <option value="肩">肩</option>
-        <option value="腕">腕</option>
-        <option value="腹・体幹">腹・体幹</option>
-        <option value="全身">全身</option>
+<div class="page" id="page-settings">
+  <div class="section">
+    <div class="section-label">固定支出の管理</div>
+    <div class="card">
+      <div id="fixed-expense-list"></div>
+      <div class="fixed-total-bar">
+        <span class="fixed-total-label">月の合計固定支出</span>
+        <span class="fixed-total-val" style="color:var(--danger);" id="fixed-exp-total">¥0</span>
+      </div>
+      <button class="add-fixed-btn" onclick="openModal('fe')"><i class="ti ti-plus"></i> 固定支出を追加</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">固定収入の管理</div>
+    <div class="card">
+      <div id="fixed-income-list"></div>
+      <div class="fixed-total-bar">
+        <span class="fixed-total-label">月の合計固定収入</span>
+        <span class="fixed-total-val" style="color:var(--success);" id="fixed-inc-total">¥0</span>
+      </div>
+      <button class="add-fixed-btn" onclick="openModal('fi')"><i class="ti ti-plus"></i> 固定収入を追加</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">カテゴリ管理</div>
+    <div class="card">
+      <div id="exp-cat-chips" style="margin-bottom:12px"></div>
+      <div class="cat-input-row"><input class="m3-input" type="text" id="new-exp-cat" placeholder="支出カテゴリ追加"><button class="cat-add-btn" onclick="addCat('exp')">追加</button></div>
+      <div id="inc-cat-chips" style="margin-bottom:12px"></div>
+      <div class="cat-input-row" style="margin-bottom:0"><input class="m3-input" type="text" id="new-inc-cat" placeholder="収入カテゴリ追加"><button class="cat-add-btn" onclick="addCat('inc')">追加</button></div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-label">テーマ設定</div>
+    <div class="card">
+      <select class="m3-input" id="theme-select" onchange="changeTheme(this.value)">
+        <option value="auto">デバイスの設定に合わせる</option>
+        <option value="light">ライトモード</option>
+        <option value="dark">ダークモード</option>
       </select>
-      
-      <div style="display:flex; justify-content:space-between; margin-top:24px;">
-        <button onclick="closeEditCustomModal()" style="padding:12px 20px; background:transparent; border:none; font-size:15px; font-weight:800; color:var(--text-secondary); cursor:pointer;">キャンセル</button>
-        <button onclick="saveEditCustom()" style="padding:12px 24px; background:var(--accent); border:none; border-radius:var(--radius-md); font-size:15px; font-weight:800; color:#fff; cursor:pointer;">更新する</button>
-      </div>
     </div>
   </div>
 
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="switchView('log', this)">
-      <svg class="nav-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      <span>記録</span>
-    </button>
-    <button class="nav-btn" onclick="switchView('history', this)">
-      <svg class="nav-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-      <span>履歴・PR</span>
-    </button>
-    <button class="nav-btn" onclick="switchView('analysis', this)">
-      <svg class="nav-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-      <span>分析</span>
-    </button>
-    <button class="nav-btn" onclick="switchView('settings', this)">
-      <svg class="nav-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-      <span>設定</span>
-    </button>
+  <div class="section">
+    <div class="section-label">同期とデータ</div>
+    <div class="card">
+      <button class="action-btn" onclick="authAndSync('save')" style="color:var(--primary);"><i class="ti ti-cloud-upload"></i> Driveへ保存</button>
+      <button class="action-btn" onclick="authAndSync('load')" style="color:var(--success);"><i class="ti ti-cloud-download"></i> Driveから復元</button>
+      <button class="action-btn" onclick="lightVibe(); exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
+      <button class="action-btn" onclick="lightVibe(); document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
+      <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)">
+      <button class="danger-btn" onclick="lightVibe(); if(confirm('全データを削除しますか？'))clearAll()"><i class="ti ti-trash"></i> データ全削除</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    function haptic(ms = 5) { if (navigator.vibrate) navigator.vibrate(ms); }
+<div class="modal-wrap" id="modal-edit" onclick="if(event.target===this)closeModal('edit')">
+  <div class="modal">
+    <div class="modal-head" id="edit-head">履歴の編集</div>
+    <input class="m3-input" type="number" id="edit-amount" placeholder="金額" style="margin-bottom:8px" inputmode="numeric">
+    <input class="m3-input" type="date" id="edit-date" style="margin-bottom:8px">
+    <select class="m3-input" id="edit-cat" style="width:100%;margin-bottom:8px" onchange="handleEditCatChange(this)"></select>
+    <input class="m3-input" type="text" id="edit-note" placeholder="メモ" style="margin-bottom:8px">
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('edit')">中止</button>
+      <button class="btn-filled" onclick="saveEdit()">更新</button>
+    </div>
+  </div>
+</div>
+<div class="modal-wrap" id="modal-fi" onclick="if(event.target===this)closeModal('fi')"><div class="modal"><div class="modal-head">固定収入</div><input class="m3-input" type="text" id="fi-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fi-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fi-cat" style="width:100%" onchange="handleCatChange(this, 'inc')"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fi')">中止</button><button class="btn-filled" onclick="saveFixed('income')">保存</button></div></div></div>
+<div class="modal-wrap" id="modal-fe" onclick="if(event.target===this)closeModal('fe')"><div class="modal"><div class="modal-head">固定支出</div><input class="m3-input" type="text" id="fe-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fe-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fe-cat" style="width:100%" onchange="handleCatChange(this, 'exp')"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fe')">中止</button><button class="btn-filled" onclick="saveFixed('expense')">保存</button></div></div></div>
+<div class="modal-wrap" id="modal-sync-alert" onclick="if(event.target===this)closeSyncPopup()"><div class="modal"><div class="modal-head" style="color:var(--danger);">同期の確認</div><p style="margin-bottom:16px;line-height:1.6;color:var(--text-main);">1週間以上バックアップされていません。データを保存しますか？</p><label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin-bottom:24px;color:var(--text-main);"><input type="checkbox" id="skip-sync-popup-check"> 以後表示しない</label><div class="modal-foot"><button class="btn-ghost" onclick="closeSyncPopup()">後で</button><button class="btn-filled" onclick="closeSyncPopup(); showPage('settings', document.querySelectorAll('.nav-btn')[3]);">設定へ</button></div></div></div>
+</div>
 
-    let touchStartX = 0; let touchStartY = 0; const swipeThreshold = 50;
-    const viewOrder = ['log', 'history', 'analysis', 'settings'];
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+/* ================= 触覚フィードバック ================= */
+function lightVibe() {
+  if (navigator.vibrate) navigator.vibrate(1); 
+}
 
-    document.addEventListener('touchstart', e => {
-      if (e.target.closest('input[type="range"], .chips')) return;
-      if (document.querySelector('.modal-overlay.show, .bottom-sheet.show')) return;
-      touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY;
-    }, {passive: true});
+/* ================= テーマ設定とアドレスバーの連動 ================= */
+let currentTheme = localStorage.getItem('kakeibo_theme') || 'auto';
 
-    document.addEventListener('touchend', e => {
-      if (e.target.closest('input[type="range"], .chips')) return;
-      if (document.querySelector('.modal-overlay.show, .bottom-sheet.show')) return;
-      
-      const diffX = e.changedTouches[0].screenX - touchStartX;
-      const diffY = e.changedTouches[0].screenY - touchStartY;
-      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
-        const activeView = document.querySelector('.view.active');
-        if(!activeView) return;
-        const currentViewId = activeView.id.replace('view-', '');
-        const currentIndex = viewOrder.indexOf(currentViewId);
-        const navBtns = document.querySelectorAll('.nav-btn');
-        if (diffX < 0 && currentIndex < viewOrder.length - 1) switchView(viewOrder[currentIndex + 1], navBtns[currentIndex + 1]);
-        else if (diffX > 0 && currentIndex > 0) switchView(viewOrder[currentIndex - 1], navBtns[currentIndex - 1]);
-      }
-    }, {passive: true});
+function initTheme() {
+  const el = document.getElementById('theme-select');
+  if(el) el.value = currentTheme;
+  applyTheme(currentTheme);
+}
 
-    let prSortMode = localStorage.getItem("wt_pr_sort") || "category";
-    let prViewMode = localStorage.getItem("wt_pr_view") || "grid";
+function changeTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem('kakeibo_theme', theme);
+  applyTheme(theme);
+}
 
-    function applyThemeSettings() {
-      const theme = localStorage.getItem('wt_theme') || 'auto';
-      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
-      const btn = document.getElementById(`theme-btn-${theme}`);
-      if (btn) btn.classList.add('active');
-      let isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (isDark) { document.documentElement.setAttribute('data-theme', 'dark'); if (meta) meta.setAttribute('content', '#000000'); } 
-      else { document.documentElement.setAttribute('data-theme', 'light'); if (meta) meta.setAttribute('content', '#fafafa'); }
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  const isDark = (theme === 'dark') || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', isDark ? '#121316' : '#F6F8FC');
+  }
+
+  if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+  if (currentTheme === 'auto') {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', e.matches ? '#121316' : '#F6F8FC');
     }
-
-    function setTheme(mode) { haptic(); localStorage.setItem('wt_theme', mode); applyThemeSettings(); }
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if ((localStorage.getItem('wt_theme') || 'auto') === 'auto') applyThemeSettings(); });
-
-    const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-    const DRIVE_FILE_NAME = 'workout_app_data_v1.json';
-    
-    let tokenClient; let gapiAccessToken = null; let editingLogId = null;
-
-    function initGoogleDrive() {
-      if (typeof google === 'undefined') return;
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CLIENT_ID, scope: SCOPES,
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            gapiAccessToken = tokenResponse.access_token;
-            document.getElementById('gdrive-login-area').style.display = 'none';
-            document.getElementById('gdrive-sync-area').style.display = 'block';
-            syncToDrive();
-          }
-        },
-      });
+    if (document.getElementById('page-stats').classList.contains('active')) {
+      renderStats();
     }
-    window.onload = () => { initGoogleDrive(); init(); };
+  }
+});
 
-    function handleAuthClick() {
-      haptic();
-      if(CLIENT_ID.includes('YOUR_CLIENT_ID')) { alert("Google Drive同期を利用するには、コード内の 'YOUR_CLIENT_ID_HERE' を自身のClient IDに変更する必要があります。"); return; }
-      tokenClient.requestAccessToken();
+function isDarkMode() {
+  if (currentTheme === 'dark') return true;
+  if (currentTheme === 'light') return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+/* ================= Drive API ================= */
+const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com'; 
+const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+let tokenClient, gapiInited=false, gisInited=false;
+function gapiLoaded(){ gapi.load('client', ()=>{ gapi.client.init({}).then(()=>{ gapi.client.load('drive','v3'); gapiInited=true; }); }); }
+function gisLoaded(){ tokenClient = google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID, scope:SCOPES, callback:''}); gisInited=true; }
+function getDiffDays(dStr){ if(!dStr)return null; const t=new Date(); t.setHours(0,0,0,0); const p=dStr.split('-'); const l=new Date(p[0],p[1]-1,p[2]); l.setHours(0,0,0,0); return Math.floor((t-l)/(864e5)); }
+function updateBackupStatusText(){
+  const last=localStorage.getItem('kakeibo_last_backup'), el=document.getElementById('backup-status');
+  if(last){ const d=getDiffDays(last); el.innerHTML=`<i class="ti ti-cloud-check"></i> ${d}日`; el.style.color=(d>=7?'var(--danger)':'var(--success)'); el.style.background=(d>=7?'var(--danger-container)':'var(--success-container)'); }
+  else { el.innerHTML='<i class="ti ti-cloud-upload"></i> 未同期'; el.style.color='var(--danger)'; el.style.background='var(--danger-container)'; }
+}
+function checkSyncAlert(){ if(localStorage.getItem('kakeibo_skip_sync_popup')==='true')return; let f=localStorage.getItem('kakeibo_first_launch'); if(!f){f=ymdLocal(new Date()); localStorage.setItem('kakeibo_first_launch',f); return;} const l=localStorage.getItem('kakeibo_last_backup'), base=l?l:f; if(getDiffDays(base)>=7)openModal('sync-alert'); }
+function closeSyncPopup(){ lightVibe(); if(document.getElementById('skip-sync-popup-check').checked)localStorage.setItem('kakeibo_skip_sync_popup','true'); closeModal('sync-alert'); }
+function authAndSync(mode){ lightVibe(); if(!gapiInited||!gisInited)return; tokenClient.callback=async(r)=>{if(!r.error){if(mode==='save')await saveToDrive();else await loadFromDrive();}}; tokenClient.requestAccessToken({prompt:(gapi.client.getToken()===null?'consent':'')}); }
+async function saveToDrive(){ try{ const fileName='my_exclusive_kakeibo_backup.json', metadata={name:fileName, parents:['appDataFolder']}, fileContent=JSON.stringify(D); const res=await gapi.client.drive.files.list({q:`name='${fileName}'`, spaces:'appDataFolder'}); const exist=res.result.files&&res.result.files[0], b='boundary_xxx', delim=`\r\n--${b}\r\n`, close=`\r\n--${b}--`; const body=`${delim}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}${delim}Content-Type: application/json\r\n\r\n${fileContent}${close}`; const path=exist?`/upload/drive/v3/files/${exist.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart'; await gapi.client.request({path, method:exist?'PATCH':'POST', params:{uploadType:'multipart'}, headers:{'Content-Type':`multipart/related; boundary=${b}`}, body}); localStorage.setItem('kakeibo_last_backup', ymdLocal(new Date())); updateBackupStatusText(); alert('保存しました'); }catch(e){alert('失敗');} }
+async function loadFromDrive(){ try{ const res=await gapi.client.drive.files.list({q:"name='my_exclusive_kakeibo_backup.json'", spaces:'appDataFolder', fields:'files(id)'}); if(!res.result.files||res.result.files.length===0){alert('バックアップが見つかりません');return;} const data=await gapi.client.drive.files.get({fileId:res.result.files[0].id, alt:'media'}); if(confirm('復元しますか？')){ D=data.result; save(); refresh(); alert('完了'); } }catch(e){alert('失敗');} }
+
+/* ================= Logic ================= */
+const CAT_ICONS={食費:'ti-soup',交通費:'ti-car',日用品:'ti-basket',娯楽:'ti-device-gamepad',医療:'ti-heart-rate-monitor',光熱費:'ti-bulb',通信費:'ti-wifi',給与:'ti-briefcase',副業:'ti-coin',ボーナス:'ti-gift',その他:'ti-dots'};
+const PALETTE=['#5C88DA','#E3A845','#5C9E6A','#DD6B66','#8B68B0','#47A3A6','#D17A4D','#C8708E','#9B9E48','#6D79B3','#428F86','#A0625D','#7A8794','#B89A49','#9B5D7A'];
+const catColorMap={}; 
+let colorIndex=0;
+function getCatColor(cat){ 
+  if(!catColorMap[cat]){
+    catColorMap[cat]=PALETTE[colorIndex%PALETTE.length]; 
+    colorIndex++;
+  } 
+  return catColorMap[cat]; 
+}
+let D = { expenses:[], income:[], fixedIncome:[], fixedExpense:[], expCats:[], incCats:[], deletedFixed:[] };
+try{const s=localStorage.getItem('kakeibo_v6'); if(s)D=JSON.parse(s);}catch(e){}
+
+function ymdLocal(d){ const y = d.getFullYear(), m = ('0' + (d.getMonth() + 1)).slice(-2), day = ('0' + d.getDate()).slice(-2); return `${y}-${m}-${day}`; }
+
+D.expenses=(D.expenses||[]).map(e=>({...e,date:e.date||ymdLocal(new Date()),amount:e.amount||0})); D.income=(D.income||[]).map(i=>({...i,date:i.date||ymdLocal(new Date()),amount:i.amount||0})); D.fixedIncome=(D.fixedIncome||[]).filter(f=>f&&f.id); D.fixedExpense=(D.fixedExpense||[]).filter(f=>f&&f.id); D.deletedFixed=D.deletedFixed||[];
+if(!D.expCats||!D.expCats.length)D.expCats=['食費','交通費','日用品','娯楽','医療','光熱費','通信費','その他'];
+if(!D.incCats||!D.incCats.length)D.incCats=['給与','副業','ボーナス','その他'];
+
+D.expCats.forEach(c => getCatColor(c));
+D.incCats.forEach(c => getCatColor(c));
+
+let curMonth=new Date(), charts={};
+let editTarget = null;
+
+function save(){ try{localStorage.setItem('kakeibo_v6',JSON.stringify(D));}catch(e){} }
+function fmt(n){return '¥'+Math.round(n).toLocaleString()}
+function curKey(){ const m = ('0' + (curMonth.getMonth() + 1)).slice(-2); return `${curMonth.getFullYear()}-${m}`; }
+function escapeHTML(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+function safeJS(str) { return String(str||'').replace(/'/g, "\\'"); }
+
+function applyFixed(key){
+  D.fixedIncome.forEach(f=>{ if((!f.startDate||key>=f.startDate)&&!D.deletedFixed.some(d=>d.fixedId===f.id&&d.month===key)&&!D.income.find(i=>i.fixedId===f.id&&i.date.startsWith(key))) D.income.push({id:Date.now()+Math.random(),date:key+'-01',amount:f.amount,cat:f.cat,note:f.name,fixed:true,fixedId:f.id}); });
+  D.fixedExpense.forEach(f=>{ if((!f.startDate||key>=f.startDate)&&!D.deletedFixed.some(d=>d.fixedId===f.id&&d.month===key)&&!D.expenses.find(e=>e.fixedId===f.id&&e.date.startsWith(key))) D.expenses.push({id:Date.now()+Math.random(),date:key+'-01',amount:f.amount,cat:f.cat,note:f.name,fixed:true,fixedId:f.id}); });
+  save();
+}
+function delItem(e, t, id){
+  if(e) e.stopPropagation();
+  lightVibe();
+  const list=t==='exp'?D.expenses:D.income; const item=list.find(i=>String(i.id)===String(id)); if(!item)return;
+  if(item.fixed&&!confirm("自動履歴を削除しますか？"))return;
+  if(item.fixed)D.deletedFixed.push({fixedId:item.fixedId,month:item.date.slice(0,7)});
+  if(t==='exp')D.expenses=D.expenses.filter(e=>String(e.id)!==String(id)); else D.income=D.income.filter(i=>String(i.id)!==String(id));
+  save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
+function getTotals(key){ applyFixed(key); const exp=D.expenses.filter(e=>e.date.startsWith(key)).reduce((s,e)=>s+e.amount,0), inc=D.income.filter(i=>i.date.startsWith(key)).reduce((s,i)=>s+i.amount,0); return{exp,inc,bal:inc-exp}; }
+function updateMetrics(){ const{exp,bal}=getTotals(curKey()); document.getElementById('m-exp').textContent=fmt(exp); const el=document.getElementById('m-bal'); el.textContent=fmt(bal); el.className='metric-val bal '+(bal>=0?'pos':'neg'); updateBackupStatusText(); }
+
+function handleSearch(t){
+  const q=document.getElementById(t+'-search').value.trim().toLowerCase();
+  const m=document.querySelector('#page-'+(t==='exp'?'home':'income')+' .month-ctrl');
+  if(!q){ m.style.display='flex'; renderItems(t+'-list',(t==='exp'?D.expenses:D.income).filter(e=>e.date.startsWith(curKey())),t); return; }
+  m.style.display='none'; renderItems(t+'-list',(t==='exp'?D.expenses:D.income).filter(e=>(e.cat+(e.note||'')).toLowerCase().includes(q)),t);
+}
+
+function renderItems(cid,items,type){
+  const el=document.getElementById(cid); if(!items||!items.length){el.innerHTML='<div class="empty-state">履歴なし</div>';return;}
+  el.innerHTML=items.sort((a,b)=>{if(a.date!==b.date)return b.date.localeCompare(a.date);return b.id-a.id;}).map(item=>`<div class="list-item"><div class="item-icon"><i class="ti ${CAT_ICONS[item.cat]||'ti-circle'}"></i></div><div class="item-body ${!item.fixed ? 'editable' : ''}" ${!item.fixed ? `onclick="openEditModal('${type}','${item.id}')" style="cursor:pointer"` : ''}><div class="item-cat">${escapeHTML(item.cat)}${item.fixed?'<span class="badge">固定</span>':''}</div>${item.note?`<div class="item-note">${escapeHTML(item.note)}</div>`:''}</div><div class="item-right"><div class="item-amount ${type==='exp'?'e':'i'}">${type==='exp'?'−':'+'}${fmt(item.amount)}</div><div class="item-date">${item.date.slice(5)}</div></div><button class="del-btn" onclick="delItem(event, '${type}','${item.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+}
+
+function populateSelects(){ 
+  ['exp-cat','fe-cat'].forEach(id=>{ const s=document.getElementById(id); if(s){ const v=s.value; s.innerHTML=D.expCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(D.expCats.includes(v)) s.value=v; } }); 
+  ['inc-cat','fi-cat'].forEach(id=>{ const s=document.getElementById(id); if(s){ const v=s.value; s.innerHTML=D.incCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(D.incCats.includes(v)) s.value=v; } }); 
+  const ec=document.getElementById('edit-cat'); if(ec&&editTarget){ const v=ec.value, cats=editTarget.type==='exp'?D.expCats:D.incCats; ec.innerHTML=cats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(cats.includes(v)) ec.value=v; }
+}
+
+function handleCatChange(el, t){
+  if(el.value==='__add_new__'){
+    lightVibe();
+    const nc=prompt('新しいカテゴリ名を入力してください');
+    if(nc&&nc.trim()){
+      const v=nc.trim();
+      if(t==='exp'&&!D.expCats.includes(v)) D.expCats.push(v);
+      if(t==='inc'&&!D.incCats.includes(v)) D.incCats.push(v);
+      save(); populateSelects(); renderCatChips();
+      el.value=v;
+    } else {
+      el.selectedIndex=0;
     }
+  }
+}
+function handleEditCatChange(el){ if(editTarget) handleCatChange(el, editTarget.type); }
 
-    async function getBackupFileId() {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="${DRIVE_FILE_NAME}"`, { headers: { 'Authorization': `Bearer ${gapiAccessToken}` } });
-      const data = await res.json();
-      return (data.files && data.files.length > 0) ? data.files[0].id : null;
-    }
+function renderCatChips(){ const e=document.getElementById('exp-cat-chips'); if(e)e.innerHTML=D.expCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('exp','${safeJS(c)}')">&times;</span></span>`).join(''); const i=document.getElementById('inc-cat-chips'); if(i)i.innerHTML=D.incCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('inc','${safeJS(c)}')">&times;</span></span>`).join(''); }
+function addCat(t){ lightVibe(); const i=document.getElementById('new-'+t+'-cat'),v=i.value.trim(); if(!v)return; if(t==='exp'&&!D.expCats.includes(v))D.expCats.push(v); if(t==='inc'&&!D.incCats.includes(v))D.incCats.push(v); i.value=''; save(); populateSelects(); renderCatChips(); }
+function removeCat(t,n){ lightVibe(); if(t==='exp')D.expCats=D.expCats.filter(c=>c!==n); else D.incCats=D.incCats.filter(c=>c!==n); save(); populateSelects(); renderCatChips(); }
+function addExpense(){ lightVibe(); const a=+document.getElementById('exp-amount').value, d=document.getElementById('exp-date').value; if(!a||!d)return; D.expenses.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('exp-cat').value,note:document.getElementById('exp-note').value}); document.getElementById('exp-amount').value=''; document.getElementById('exp-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+function addIncome(){ lightVibe(); const a=+document.getElementById('inc-amount').value, d=document.getElementById('inc-date').value; if(!a||!d)return; D.income.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('inc-cat').value,note:document.getElementById('inc-note').value}); document.getElementById('inc-amount').value=''; document.getElementById('inc-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 
-    async function syncToDrive() {
-      if(!gapiAccessToken) return;
-      haptic(); updateSyncBadgeState('syncing');
-      const fileContent = JSON.stringify({ logs: logs, customExercises: customExercises });
-      try {
-        let fileId = await getBackupFileId();
-        if (!fileId) {
-          const metaRes = await fetch('https://www.googleapis.com/drive/v3/files', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${gapiAccessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: DRIVE_FILE_NAME, parents: ['appDataFolder'] })
-          });
-          const metaData = await metaRes.json();
-          fileId = metaData.id;
-        }
-        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-          method: 'PATCH',
-          headers: { 'Authorization': `Bearer ${gapiAccessToken}`, 'Content-Type': 'application/json' },
-          body: fileContent
-        });
-        localStorage.setItem("wt_last_sync", new Date().toISOString());
-        updateSyncBadgeState('safe');
-      } catch (e) { 
-        console.error("Sync failed:", e); 
-        updateSyncBadgeState('danger'); 
-      }
-    }
+function openEditModal(type, id) {
+  lightVibe();
+  const list = type === 'exp' ? D.expenses : D.income; const item = list.find(i => String(i.id) === String(id)); if (!item || item.fixed) return;
+  editTarget = { type, id }; document.getElementById('edit-head').textContent = type === 'exp' ? '支出の編集' : '収入の編集';
+  document.getElementById('edit-amount').value = item.amount; document.getElementById('edit-date').value = item.date;
+  populateSelects();
+  document.getElementById('edit-cat').value = item.cat; 
+  document.getElementById('edit-note').value = item.note || ''; openModal('edit');
+}
+function saveEdit() {
+  lightVibe();
+  if (!editTarget) return; const list = editTarget.type === 'exp' ? D.expenses : D.income; const item = list.find(i => String(i.id) === String(editTarget.id));
+  if (item) { item.amount = +document.getElementById('edit-amount').value; item.date = document.getElementById('edit-date').value; item.cat = document.getElementById('edit-cat').value; item.note = document.getElementById('edit-note').value; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+  closeModal('edit');
+}
 
-    async function syncFromDrive() {
-      if(!gapiAccessToken) return;
-      haptic(); if(!confirm("クラウド上のデータで上書きしますか？")) return;
-      updateSyncBadgeState('syncing');
-      const fileId = await getBackupFileId();
-      if(fileId) {
-        try {
-          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { 'Authorization': `Bearer ${gapiAccessToken}` } });
-          const data = await res.json();
-          if(data.logs) { logs = data.logs; localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs)); }
-          if(data.customExercises) { customExercises = data.customExercises; localStorage.setItem("wt_custom_ex_v5", JSON.stringify(customExercises)); }
-          localStorage.setItem("wt_last_sync", new Date().toISOString());
-          alert("復元しました！"); location.reload();
-        } catch(e) { alert("復元失敗"); updateSyncBadgeState('danger'); }
-      } else { alert("データがありません"); updateSyncBadgeState('danger'); }
-    }
+function renderFixedLists(){
+  document.getElementById('fixed-expense-list').innerHTML=D.fixedExpense.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:var(--danger);">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('expense','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+  document.getElementById('fixed-exp-total').textContent = fmt(D.fixedExpense.reduce((s,f)=>s+f.amount,0));
+  document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:var(--success);">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('income','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+  document.getElementById('fixed-inc-total').textContent = fmt(D.fixedIncome.reduce((s,f)=>s+f.amount,0));
+}
 
-    function triggerManualSync() {
-      haptic();
-      if(gapiAccessToken) syncToDrive();
-      else { switchView('settings', document.querySelectorAll('.nav-btn')[3]); alert("Googleアカウントでログインしてください。"); }
-    }
+function delFixed(t,id){ lightVibe(); if(t==='income')D.fixedIncome=D.fixedIncome.filter(f=>String(f.id)!==String(id)); else D.fixedExpense=D.fixedExpense.filter(f=>String(f.id)!==String(id)); save(); renderFixedLists(); refresh(); }
+function openModal(id){ lightVibe(); document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id){ lightVibe(); document.getElementById('modal-'+id).classList.remove('open'); }
+function saveFixed(t){ lightVibe(); const p=t==='income'?'fi':'fe', name=document.getElementById(p+'-name').value.trim(), amount=+document.getElementById(p+'-amount').value; if(!name||!amount)return; if(t==='income')D.fixedIncome.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); else D.fixedExpense.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); document.getElementById(p+'-name').value=''; closeModal(p); save(); renderFixedLists(); refresh(); }
 
-    function updateSyncBadgeState(state) {
-      const badge = document.getElementById('sync-badge'); const text = document.getElementById('sync-badge-text');
-      badge.className = 'sync-badge';
-      if(state === 'syncing') { badge.classList.add('syncing'); text.innerText = "同期中..."; return; }
-      const lastSync = localStorage.getItem("wt_last_sync");
-      if(!lastSync) { badge.classList.add('danger'); text.innerText = "未設定"; return; }
-      const daysDiff = Math.floor((new Date() - new Date(lastSync)) / (1000 * 60 * 60 * 24));
-      if (daysDiff >= 7) { badge.classList.add('danger'); text.innerText = "未同期"; } 
-      else if (daysDiff >= 1) { badge.classList.add('warning'); text.innerText = "未同期"; } 
-      else { badge.classList.add('safe'); text.innerText = "同期済"; }
-    }
+function updateMonthLabels(){ const txt=curMonth.getFullYear()+'年'+(curMonth.getMonth()+1)+'月'; const val=`${curMonth.getFullYear()}-${('0'+(curMonth.getMonth()+1)).slice(-2)}`; document.querySelectorAll('.month-label').forEach(el=>el.textContent=txt); document.querySelectorAll('.month-picker').forEach(el=>el.value=val); }
+function jumpMonth(val){ lightVibe(); if(!val)return; const parts=val.split('-'); curMonth=new Date(parts[0], parts[1]-1, 1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+function changeMonth(dir){ lightVibe(); curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+dir,1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 
-    const CAT_ICONS = {
-      "胸": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h16M4 16h16M12 4v16"/></svg>`,
-      "背中": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 22h20L12 2z"/></svg>`,
-      "脚": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16" rx="2"/><rect x="14" y="4" width="4" height="16" rx="2"/></svg>`,
-      "肩": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>`,
-      "腕": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="10" width="20" height="4" rx="1"/><rect x="6" y="8" width="4" height="8" rx="1"/><rect x="14" y="8" width="4" height="8" rx="1"/></svg>`,
-      "腹・体幹": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="5" width="10" height="14" rx="2"/><path d="M7 12h10M12 5v14"/></svg>`,
-      "全身": `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`
-    };
-    function getCatClass(cat) { const map = {"胸":"chest", "背中":"back", "脚":"legs", "肩":"shoulder", "腕":"arms", "腹・体幹":"core", "全身":"full"}; return map[cat] || "full"; }
+function showPage(n,btn){ lightVibe(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById('page-'+n).classList.add('active'); btn.classList.add('active'); if(n==='home'||n==='income')refresh(); if(n==='stats')renderStats(); }
+function switchStat(t,btn){ lightVibe(); document.querySelectorAll('.stat-tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active')); document.getElementById('st-'+t).classList.add('active'); btn.classList.add('active'); renderStatTab(t); }
 
-    const PRESET_DB = [
-      { c: "胸", n: "ベンチプレス（バーベル）", s: "べんちぷれす ばーべる bench press" },
-      { c: "胸", n: "インクラインベンチプレス（バーベル）", s: "いんくらいんべんちぷれす ばーべる incline bench press" },
-      { c: "胸", n: "デクラインベンチプレス（バーベル）", s: "でくらいんべんちぷれす ばーべる decline bench press" },
-      { c: "胸", n: "ダンベルプレス（ダンベル）", s: "だんべるぷれす だんべる dumbbell press" },
-      { c: "胸", n: "インクラインダンベルプレス（ダンベル）", s: "いんくらいんだんべるぷれす だんべる incline dumbbell press" },
-      { c: "胸", n: "デクラインダンベルプレス（ダンベル）", s: "でくらいんだんべるぷれす だんべる decline dumbbell press" },
-      { c: "胸", n: "ダンベルフライ（ダンベル）", s: "だんべるふらい だんべる dumbbell fly" },
-      { c: "胸", n: "インクラインダンベルフライ（ダンベル）", s: "いんくらいんだんべるふらい だんべる incline dumbbell fly" },
-      { c: "胸", n: "チェストプレス（マシン）", s: "ちぇすとぷれす ましん chest press" },
-      { c: "胸", n: "ペックデックフライ / マシンフライ（マシン）", s: "ぺっくでっくふらい ましんふらい peck deck fly machine" },
-      { c: "胸", n: "ケーブルクロスオーバー（ケーブル）", s: "けーぶるくろすおーばー cable crossover" },
-      { c: "胸", n: "プッシュアップ / 腕立て伏せ（自重）", s: "ぷっしゅあっぷ うでたてふせ push up" },
-      { c: "胸", n: "ディップス（自重・加重）", s: "でぃっぷす dips" },
-      { c: "胸", n: "ダンベルプルオーバー（ダンベル）", s: "だんべるぷるおーばー dumbbell pullover" },
-      { c: "背中", n: "デッドリフト（バーベル）", s: "でっどりふと ばーべる deadlift" },
-      { c: "背中", n: "チンニング / 懸垂（自重・加重）", s: "ちんにんぐ けんすい chinning pull up" },
-      { c: "背中", n: "ラットプルダウン（マシン・ケーブル）", s: "らっとぷるだうん lat pulldown" },
-      { c: "背中", n: "ベントオーバーロウ（バーベル）", s: "べんとおーばーろう bent over row" },
-      { c: "背中", n: "ワンアームダンベルロウ（ダンベル）", s: "わんあーむだんべるろう one arm dumbbell row" },
-      { c: "背中", n: "シーテッドロウ（マシン・ケーブル）", s: "しーてっどろう seated row" },
-      { c: "背中", n: "シュラッグ（バーベル・ダンベル・マシン）", s: "しゅらっぐ shrug" },
-      { c: "背中", n: "バックエクステンション（自重・加重・マシン）", s: "ばっくえくすてんしょん back extension" },
-      { c: "背中", n: "インバーテッドロウ / 斜め懸垂（自重）", s: "いんばーてっどろう ななめけんすい inverted row" },
-      { c: "脚", n: "バックスクワット（バーベル）", s: "ばっくすくわっと back squat" },
-      { c: "脚", n: "フロントスクワット（バーベル）", s: "ふろんとすくわっと front squat" },
-      { c: "脚", n: "ハックスクワット（マシン）", s: "はっくすくわっと hack squat" },
-      { c: "脚", n: "レッグプレス（マシン）", s: "れっぐぷれす leg press" },
-      { c: "脚", n: "ランジ / ウォーキングランジ（バーベル・ダンベル・自重）", s: "らんじ うぉーきんぐらんじ lunge walking" },
-      { c: "脚", n: "ブルガリアンスクワット（ダンベル・自重）", s: "ぶるがりあんすくわっと bulgarian squat" },
-      { c: "脚", n: "レッグエクステンション（マシン）", s: "れっぐえくすてんしょん leg extension" },
-      { c: "脚", n: "レッグカール（マシン）", s: "れっぐかーる leg curl" },
-      { c: "脚", n: "ルーマニアンデッドリフト（バーベル・ダンベル）", s: "るーまにあんでっどりふと rdl romanian deadlift" },
-      { c: "脚", n: "ヒップスラスト（バーベル・マシン・自重）", s: "ひっぷすらすと hip thrust" },
-      { c: "脚", n: "スタンディングカーフレイズ（バーベル・マシン・自重）", s: "すたんでぃんぐかーふれいず standing calf raise" },
-      { c: "肩", n: "オーバーヘッドプレス / ミリタリープレス（バーベル）", s: "おーばーへっどぷれす みりたりーぷれす overhead press military" },
-      { c: "肩", n: "ダンベルショルダープレス（ダンベル）", s: "だんべるしょるだーぷれす dumbbell shoulder press" },
-      { c: "肩", n: "サイドレイズ（ダンベル・ケーブル・マシン）", s: "さいどれいず side raise" },
-      { c: "肩", n: "フロントレイズ（ダンベル・バーベル・ケーブル）", s: "ふろんとれいず front raise" },
-      { c: "肩", n: "リアレイズ / ベントオーバーレイズ（ダンベル・ケーブル）", s: "りあれいず べんとおーばーれいず rear raise bent over" },
-      { c: "肩", n: "アップライトロウ（バーベル・ケーブル）", s: "あっぷらいとろう upright row" },
-      { c: "腕", n: "バーベルカール（バーベル）", s: "ばーべるかーる barbell curl" },
-      { c: "腕", n: "ダンベルカール（ダンベル）", s: "だんべるかーる dumbbell curl" },
-      { c: "腕", n: "ハンマーカール（ダンベル）", s: "はんまーかーる hammer curl" },
-      { c: "腕", n: "ケーブルカール（ケーブル）", s: "けーぶるかーる cable curl" },
-      { c: "腕", n: "トライセプスエクステンション（バーベル・ダンベル）", s: "とらいせぷすえくすてんしょん triceps extension" },
-      { c: "腕", n: "スカルクラッシャー（バーベル）", s: "すかるくらっしゃー skull crusher" },
-      { c: "腕", n: "トライセプスプレスダウン（ケーブル）", s: "とらいせぷすぷれすだうん triceps pressdown" },
-      { c: "腕", n: "フレンチプレス（ダンベル・バーベル）", s: "ふれんちぷれす french press" },
-      { c: "腹・体幹", n: "クランチ（自重・マシン・ケーブル）", s: "くらんち crunch" },
-      { c: "腹・体幹", n: "シットアップ（自重）", s: "しっとあっぷ 腹筋 ふっきん sit up" },
-      { c: "腹・体幹", n: "レッグレイズ（自重）", s: "れっぐれいず leg raise" },
-      { c: "腹・体幹", n: "アブローラー / 腹筋ローラー（専用器具）", s: "あぶろーらー ふっきんろーらー ab roller" },
-      { c: "腹・体幹", n: "プランク（自重）", s: "ぷらんく plank" },
-      { c: "全身", n: "クリーン＆ジャーク（バーベル）", s: "くりーんあんどじゃーく clean and jerk" },
-      { c: "全身", n: "スナッチ（バーベル）", s: "すなっち snatch" }
-    ];
+function renderStats(){ renderTopPie(); const a=document.querySelector('.stat-tab.active'); if(a)renderStatTab(a.id.replace('st-','')); }
+function getBycat(k){ applyFixed(k); const b={}; D.expenses.filter(e=>e.date.startsWith(k)).forEach(e=>{b[e.cat]=(b[e.cat]||0)+e.amount}); return b; }
 
-    let customExercises = JSON.parse(localStorage.getItem("wt_custom_ex_v5")) || [];
-    customExercises = customExercises.map(ex => { if (typeof ex === 'string') return { n: ex, c: "全身" }; return ex; });
+function renderTopPie(){
+  const k=curKey(), b=getBycat(k), l=Object.keys(b).sort((x,y)=>b[y]-b[x]), v=l.map(x=>b[x]), c=l.map(x=>getCatColor(x)), ctx=document.getElementById('top-pie-chart').getContext('2d');
+  document.getElementById('pie-center-label').textContent = parseInt(k.split('-')[1]) + '月';
+  
+  if(charts.topPie){ charts.topPie.data.labels = l; charts.topPie.data.datasets[0].data = v; charts.topPie.data.datasets[0].backgroundColor = c; charts.topPie.update(); }
+  else { charts.topPie=new Chart(ctx,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:c,borderWidth:0}]},options:{responsive:false,cutout:'65%',plugins:{legend:{display:false}}}}); }
+  
+  if(!l.length){ document.getElementById('top-pie-legend').innerHTML=''; return; }
+  const t=v.reduce((x,y)=>x+y,0); document.getElementById('top-pie-legend').innerHTML=l.map((x,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${c[i]}"></div><span style="flex:1;font-weight:700;color:var(--text-main);">${escapeHTML(x)}</span><span style="color:var(--text-main);">${Math.round(b[x]/t*100)}%</span></div>`).join('');
+}
 
-    let logs = JSON.parse(localStorage.getItem("wt_logs_html_v3")) || [];
-    let pendingExerciseName = "";
+function renderStatTab(t){
+  const tc = isDarkMode() ? '#E3E3E3' : '#1F1F1F';
+  const gc = isDarkMode() ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+  const cInc = isDarkMode() ? '#81C995' : '#146C2E';
+  const cExp = isDarkMode() ? '#FFB4AB' : '#BA1A1A';
 
-    const getTodayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-    const formatDate = (iso) => { const d = new Date(iso); return `${d.getMonth()+1}/${d.getDate()}`; };
-    function normalizeStr(str) { return str ? str.toLowerCase().replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60)) : ""; }
+  if(t==='monthly'){
+    const ms=[]; for(let i=5;i>=0;i--){const d=new Date(curMonth.getFullYear(),curMonth.getMonth()-i,1);ms.push(d.toISOString().slice(0,7))}
+    const labels=ms.map(x=>parseInt(x.split('-')[1])+'月'), incData=ms.map(x=>getTotals(x).inc), expData=ms.map(x=>getTotals(x).exp);
+    if(charts.monthly) charts.monthly.destroy();
+    charts.monthly=new Chart(document.getElementById('monthly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:cInc,borderRadius:6},{label:'支出',data:expData,backgroundColor:cExp,borderRadius:6}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}});
+  }else if(t==='category'){
+    const b=getBycat(curKey()), l=Object.keys(b).sort((x,y)=>b[y]-b[x]), total=l.reduce((x,y)=>x+b[y],0);
+    document.getElementById('cat-detail-list').innerHTML=l.map(x=>`<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><b style="color:var(--text-main);">${escapeHTML(x)}</b><span style="color:var(--danger);">${fmt(b[x])}</span></div><div style="background:var(--input-bg);height:8px;border-radius:999px;overflow:hidden"><div style="background:${getCatColor(x)};width:${Math.round(b[x]/total*100)}%;height:100%;"></div></div></div>`).join('');
+  }else{
+    const y=curMonth.getFullYear(); const ms=Array.from({length:12},(_,i)=>`${y}-${String(i+1).padStart(2,'0')}`);
+    const labels=ms.map(x=>parseInt(x.split('-')[1])+'月'), expData=ms.map(x=>getTotals(x).exp), incData=ms.map(x=>getTotals(x).inc);
+    document.getElementById('y-inc').textContent=fmt(incData.reduce((a,b)=>a+b,0)); document.getElementById('y-exp').textContent=fmt(expData.reduce((a,b)=>a+b,0));
+    if(charts.yearly) charts.yearly.destroy();
+    charts.yearly=new Chart(document.getElementById('yearly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:cInc,borderRadius:4},{label:'支出',data:expData,backgroundColor:cExp,borderRadius:4}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}});
+  }
+}
 
-    function getMuscleImpactsFallback(exName, primaryCat) {
-      const name = exName.toLowerCase(); const impacts = {}; const baseCat = primaryCat === "カスタム" ? "全身" : primaryCat; impacts[baseCat] = 1.0;
-      if (name.includes("ベンチプレス") || name.includes("チェストプレス") || name.includes("ディップス") || name.includes("プッシュアップ") || name.includes("腕立て")) { impacts["胸"] = 1.0; impacts["肩"] = 0.4; impacts["腕"] = 0.4; } 
-      else if (name.includes("フライ") || name.includes("ペックデック")) { impacts["胸"] = 1.0; impacts["肩"] = 0.2; } 
-      else if (name.includes("デッドリフト")) { impacts["背中"] = 0.8; impacts["脚"] = 1.0; impacts["腹・体幹"] = 0.05; } 
-      else if (name.includes("ロウ") || name.includes("プルダウン") || name.includes("チンニング") || name.includes("懸垂")) { impacts["背中"] = 1.0; impacts["腕"] = 0.4; } 
-      else if (name.includes("スクワット") || name.includes("レッグプレス") || name.includes("ランジ")) { impacts["脚"] = 1.0; impacts["腹・体幹"] = 0.05; } 
-      else if (name.includes("ショルダープレス") || name.includes("ミリタリー") || name.includes("アップライトロウ")) { impacts["肩"] = 1.0; impacts["腕"] = 0.4; } 
-      else if (name.includes("レイズ")) { impacts["肩"] = 1.0; } 
-      else if (name.includes("カール") || name.includes("エクステンション") || name.includes("プレスダウン") || name.includes("クラッシャー")) { impacts["腕"] = 1.0; } 
-      else if (name.includes("クランチ") || name.includes("シットアップ") || name.includes("ローラー") || name.includes("プランク")) { impacts["腹・体幹"] = 1.0; } 
-      else if (name.includes("スナッチ") || name.includes("クリーン")) { impacts["脚"] = 0.8; impacts["背中"] = 0.8; impacts["肩"] = 0.6; impacts["腹・体幹"] = 0.1; }
-      return impacts;
-    }
+function exportCSV(){ lightVibe(); const e=(s)=>`"${String(s||'').replace(/"/g,'""')}"`; let c="日付,区分,カテゴリ,金額,メモ\n"; const all=[...D.expenses.map(x=>({...x,t:'支出'})),...D.income.map(x=>({...x,t:'収入'}))].sort((a,b)=>a.date.localeCompare(b.date)); all.forEach(x=>{c+=`${x.date},${x.t},${e(x.cat)},${x.amount},${e(x.note)}\n`}); const bom=new Uint8Array([0xEF,0xBB,0xBF]), blob=new Blob([bom,c],{type:'text/csv'}), url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=`kakeibo_${ymdLocal(new Date())}.csv`; a.click(); }
+function importCSV(ev){ lightVibe(); const f=ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{ const lines=e.target.result.split(/\r\n|\n/); for(let i=1;i<lines.length;i++){ const l=lines[i].trim(); if(!l)continue; const c=l.split(','); if(c.length>=4){ const d=c[0], t=c[1], cat=c[2].replace(/"/g,''), am=parseInt(c[3]); if(t==='支出'){D.expenses.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.expCats.includes(cat))D.expCats.push(cat);} else{D.income.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.incCats.includes(cat))D.incCats.push(cat);}} } save(); refresh(); alert('完了'); }; r.readAsText(f); }
+function clearAll(){ lightVibe(); localStorage.clear(); location.reload(); }
+function refresh(){
+  updateMetrics(); applyFixed(curKey());
+  const es=document.getElementById('exp-search'); if(es)es.value='';
+  const is=document.getElementById('inc-search'); if(is)is.value='';
+  document.querySelectorAll('.month-ctrl').forEach(m=>m.style.display='flex');
+  renderItems('exp-list',D.expenses.filter(e=>e.date.startsWith(curKey())),'exp');
+  renderItems('inc-list',D.income.filter(i=>i.date.startsWith(curKey())),'inc');
+  renderFixedLists(); populateSelects(); renderCatChips();
+}
 
-    function getAllExercises() { const customs = customExercises.map(ex => ({ c: ex.c, n: ex.n, s: ex.n, i: getMuscleImpactsFallback(ex.n, ex.c) })); return [...PRESET_DB, ...customs]; }
-    function getExerciseCategory(exName) { const ex = getAllExercises().find(e => e.n === exName); return ex && ex.c !== "カスタム" ? ex.c : "全身"; }
-    function getMuscleImpacts(exName, primaryCat) { const dbEx = getAllExercises().find(e => e.n === exName); return (dbEx && dbEx.i) ? dbEx.i : getMuscleImpactsFallback(exName, primaryCat); }
-    function getRPEColor(rpe) { if(rpe >= 9.5) return "var(--color-rpe-high)"; if(rpe >= 8) return "var(--color-rpe-mid)"; return "var(--color-rpe-low)"; }
+function setToday() {
+  const localToday = ymdLocal(new Date());
+  const expInp = document.getElementById('exp-date');
+  const incInp = document.getElementById('inc-date');
+  if(expInp) expInp.value = localToday;
+  if(incInp) incInp.value = localToday;
+}
 
-    function handleSuggest() {
-      const inputRaw = document.getElementById('exercise-input').value; const listDiv = document.getElementById('suggest-list');
-      if (!inputRaw.trim()) { listDiv.style.display = 'none'; updateInputState(); return; }
-      const searchTerms = normalizeStr(inputRaw).trim().split(/\s+/);
-      const filtered = getAllExercises().filter(ex => searchTerms.every(term => (normalizeStr(ex.c) + " " + normalizeStr(ex.n) + " " + normalizeStr(ex.s)).includes(term)));
-      
-      if (filtered.length > 0) {
-        listDiv.innerHTML = filtered.slice(0, 20).map(ex => `<div class="suggest-item" onclick="selectSuggest('${ex.n}')"><div class="cat-icon-wrapper ${getCatClass(ex.c)}">${CAT_ICONS[ex.c] || CAT_ICONS["全身"]}</div><div style="display:flex; flex-direction:column; gap:4px;"><span style="font-size:11px; font-weight:700; color:var(--text-tertiary); line-height:1;">${ex.c}</span><span style="line-height:1.2;">${ex.n}</span></div></div>`).join('');
-      } else {
-        listDiv.innerHTML = `<div class="suggest-create-btn" onclick="openCreateModal('${inputRaw}')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>「${inputRaw}」を新規作成</div>`;
-      }
-      listDiv.style.display = 'block'; updateInputState();
-    }
+window.onload=()=>{
+  initTheme();
+  gapiLoaded(); gisLoaded(); setToday(); updateMonthLabels();
+  refresh(); setTimeout(checkSyncAlert,800);
+};
 
-    function selectSuggest(exName) { haptic(10); document.getElementById('exercise-input').value = exName; document.getElementById('suggest-list').style.display = 'none'; updateInputState(); }
-    document.addEventListener('click', (e) => { if(!e.target.closest('#suggest-wrapper')) document.getElementById('suggest-list').style.display = 'none'; });
+// スワイプによるタブ切り替え機能
+let touchstartX = 0;
+let touchendX = 0;
+let touchstartY = 0;
+let touchendY = 0;
 
-    function openCreateModal(name) {
-      haptic(15); pendingExerciseName = name; document.getElementById('modal-ex-name').innerText = name;
-      document.getElementById('modal-cat-grid').innerHTML = ["胸", "背中", "脚", "肩", "腕", "腹・体幹", "全身"].map(c => `<button class="cat-btn" onclick="createCustomExercise('${c}')"><div class="cat-icon-wrapper ${getCatClass(c)}" style="width:28px; height:28px; border-radius:6px;">${CAT_ICONS[c]}</div>${c}</button>`).join('');
-      document.getElementById('suggest-list').style.display = 'none'; 
-      const m = document.getElementById('create-modal'); m.style.display = 'flex'; setTimeout(()=> m.classList.add('show'), 10);
-    }
-    
-    function closeModal() { haptic(10); const m = document.getElementById('create-modal'); m.classList.remove('show'); setTimeout(()=> { m.style.display = 'none'; pendingExerciseName = ""; }, 200); }
-    
-    function createCustomExercise(cat) { 
-      haptic(15); 
-      customExercises.push({ n: pendingExerciseName, c: cat }); 
-      localStorage.setItem("wt_custom_ex_v5", JSON.stringify(customExercises)); 
-      document.getElementById('exercise-input').value = pendingExerciseName; 
-      closeModal(); 
-      updateInputState(); 
-    }
+const appArea = document.querySelector('.app');
 
-    let editingCustomOriginalName = "";
-    function openEditCustomModal(exName) {
-      haptic(10);
-      const exObj = customExercises.find(ex => ex.n === exName);
-      if(!exObj) return;
-      
-      editingCustomOriginalName = exName;
-      document.getElementById('edit-custom-name').value = exObj.n;
-      document.getElementById('edit-custom-cat').value = exObj.c;
-      
-      const m = document.getElementById('edit-custom-modal'); 
-      m.style.display = 'flex'; setTimeout(()=> m.classList.add('show'), 10);
-    }
-    
-    function closeEditCustomModal() { 
-      haptic(); const m = document.getElementById('edit-custom-modal'); m.classList.remove('show'); setTimeout(()=> { m.style.display = 'none'; editingCustomOriginalName = ""; }, 200); 
-    }
+appArea.addEventListener('touchstart', e => {
+  touchstartX = e.changedTouches[0].screenX;
+  touchstartY = e.changedTouches[0].screenY;
+}, {passive: true});
 
-    function saveEditCustom() {
-      haptic(15);
-      const newName = document.getElementById('edit-custom-name').value.trim();
-      const newCat = document.getElementById('edit-custom-cat').value;
-      if(!newName) { alert("種目名を入力してください"); return; }
-      
-      if (newName !== editingCustomOriginalName && getAllExercises().some(ex => ex.n === newName)) {
-        alert("この種目名は既に存在します"); return;
-      }
+appArea.addEventListener('touchend', e => {
+  touchendX = e.changedTouches[0].screenX;
+  touchendY = e.changedTouches[0].screenY;
+  handleSwipe(e.target);
+}, {passive: true});
 
-      const exIndex = customExercises.findIndex(ex => ex.n === editingCustomOriginalName);
-      if(exIndex !== -1) {
-        customExercises[exIndex].n = newName;
-        customExercises[exIndex].c = newCat;
-        localStorage.setItem("wt_custom_ex_v5", JSON.stringify(customExercises));
-      }
+function handleSwipe(targetElement) {
+  // グラフ（canvas）の上でのスワイプは誤爆防止のため無視する
+  if (targetElement.tagName.toLowerCase() === 'canvas') return;
 
-      logs.forEach(log => { if (log.exercise === editingCustomOriginalName) log.exercise = newName; });
-      localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs));
+  const deltaX = touchendX - touchstartX;
+  const deltaY = touchendY - touchstartY;
 
-      if(gapiAccessToken && localStorage.getItem("wt_last_sync")) { document.getElementById('sync-badge').className = 'sync-badge warning'; document.getElementById('sync-badge-text').innerText = "未同期"; }
+  // 縦スクロールの動きの方が大きい場合、または横の移動距離が50px未満の場合は無視
+  if (Math.abs(deltaY) > Math.abs(deltaX) || Math.abs(deltaX) < 50) return;
 
-      closeEditCustomModal();
-      if (document.getElementById('exercise-input').value === editingCustomOriginalName) document.getElementById('exercise-input').value = newName;
+  const tabs = ['home', 'income', 'stats', 'settings'];
+  const activeBtn = document.querySelector('.nav-btn.active');
+  if (!activeBtn) return;
+  
+  const currentTabName = tabs.find(t => activeBtn.getAttribute('onclick').includes(t));
+  const currentIndex = tabs.indexOf(currentTabName);
+  const navBtns = document.querySelectorAll('.nav-btn');
 
-      updateUI();
-      const activeView = document.querySelector('.view.active').id;
-      if(activeView === 'view-history') renderHistoryTab();
-      if(activeView === 'view-analysis') renderAnalysisTab();
+  if (deltaX < 0 && currentIndex < tabs.length - 1) {
+    // 左にフリック（右のタブへ進む）
+    lightVibe();
+    showPage(tabs[currentIndex + 1], navBtns[currentIndex + 1]);
+  } else if (deltaX > 0 && currentIndex > 0) {
+    // 右にフリック（左のタブへ戻る）
+    lightVibe();
+    showPage(tabs[currentIndex - 1], navBtns[currentIndex - 1]);
+  }
+}
 
-      const sheet = document.getElementById('history-detail-modal');
-      if (sheet && sheet.classList.contains('show')) openHistoryDetail(newName);
-    }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') setToday();
+});
 
-    function openEditModal(id) {
-      haptic(); 
-      // 履歴詳細ボトムシートが開いていれば閉じる（裏に隠す）
-      const sheet = document.getElementById('history-detail-modal');
-      if (sheet && sheet.classList.contains('show')) {
-        sheet.classList.remove('show');
-        setTimeout(() => { sheet.style.display = 'none'; }, 200);
-      }
-
-      const log = logs.find(l => l.id === id); if(!log) return; editingLogId = id;
-      document.getElementById('edit-date').value = log.date;
-      document.getElementById('edit-exercise').innerHTML = [...new Set(getAllExercises().map(ex => ex.n))].map(name => `<option value="${name}" ${name === log.exercise ? 'selected' : ''}>${name}</option>`).join('');
-      document.getElementById('edit-weight').value = log.weight; document.getElementById('edit-reps').value = log.reps; document.getElementById('edit-rpe').value = log.rpe || 8; document.getElementById('edit-set').value = log.setNumber || 1;
-      const m = document.getElementById('edit-modal'); m.style.display = 'flex'; setTimeout(()=> m.classList.add('show'), 10);
-    }
-    
-    function closeEditModal() { haptic(); const m = document.getElementById('edit-modal'); m.classList.remove('show'); setTimeout(()=> { m.style.display = 'none'; editingLogId = null; }, 200); }
-
-    function adjustEditVal(idSuffix, delta) {
-      haptic(); const el = document.getElementById(`edit-${idSuffix}`); let val = parseFloat(el.value) || 0; val += delta;
-      if (idSuffix === 'weight' && val < 0) val = 0; if (idSuffix === 'reps' && val < 1) val = 1; if (idSuffix === 'set' && val < 1) val = 1;
-      if (idSuffix === 'rpe') { if(val > 10) val = 10; if(val < 5) val = 5; }
-      el.value = (idSuffix === 'weight' || idSuffix === 'rpe') ? val : Math.round(val);
-    }
-
-    function saveEditLog() {
-      haptic(15); if(!editingLogId) return; const logIndex = logs.findIndex(l => l.id === editingLogId); if(logIndex === -1) return;
-      
-      const log = logs[logIndex];
-      const exAfter = document.getElementById('edit-exercise').value;
-
-      const w = parseFloat(document.getElementById('edit-weight').value) || 0; 
-      const r = parseInt(document.getElementById('edit-reps').value) || 1; 
-      const rpe = parseFloat(document.getElementById('edit-rpe').value) || 8;
-      
-      log.date = document.getElementById('edit-date').value; 
-      log.exercise = exAfter; 
-      log.setNumber = parseInt(document.getElementById('edit-set').value) || 1; 
-      log.weight = w; 
-      log.reps = r; 
-      log.rpe = rpe; 
-      log.oneRM = calculate1RM(w, r, rpe);
-      
-      logs.sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id); 
-      localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs));
-      
-      if(gapiAccessToken && localStorage.getItem("wt_last_sync")) { 
-        document.getElementById('sync-badge').className = 'sync-badge warning'; 
-        document.getElementById('sync-badge-text').innerText = "未同期"; 
-      }
-      closeEditModal(); 
-      updateUI(); 
-      
-      const activeView = document.querySelector('.view.active').id;
-      if(activeView === 'view-history') {
-        renderHistoryTab();
-        // 編集後に再度同じ種目の詳細を開く
-        setTimeout(() => { openHistoryDetail(exAfter); }, 250); 
-      }
-    }
-
-    const calculate1RM = (w, r, rpe) => { if (!w || !r || r < 1) return parseFloat(w)||0; const effectiveReps = parseInt(r) + Math.max(0, 10 - parseFloat(rpe)); if (effectiveReps <= 1) return parseFloat(w); return Math.round((parseFloat(w) * (1 + effectiveReps / 30)) * 10) / 10; };
-    const getPR = (ex) => { const exLogs = logs.filter(l => l.exercise === ex); if(!exLogs.length) return null; return exLogs.reduce((prev, current) => ((parseFloat(prev.weight)||0) > (parseFloat(current.weight)||0)) ? prev : current).weight; };
-
-    function init() { applyThemeSettings(); updateSyncBadgeState(); document.getElementById('record-date').value = getTodayStr(); document.getElementById('exercise-input').value = "ベンチプレス（バーベル）"; updateUI(); }
-
-    function switchView(viewId, btn) {
-      haptic(10); document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(`view-${viewId}`).classList.add('active'); if (btn) btn.classList.add('active');
-      if(viewId === 'history') renderHistoryTab(); if(viewId === 'analysis') renderAnalysisTab();
-    }
-
-    function adjustVal(id, delta) { haptic(); const el = document.getElementById(id); let val = parseFloat(el.value) || 0; val += delta; if (id === 'weight' && val < 0) val = 0; if (id === 'reps' && val < 1) val = 1; el.value = id === 'weight' ? val : Math.round(val); updateInputState(); }
-
-    function updateInputState() {
-      const dateStr = document.getElementById('record-date').value || getTodayStr();
-      const ex = document.getElementById('exercise-input').value.trim();
-      const w = document.getElementById('weight').value; const r = document.getElementById('reps').value; const rpeVal = parseFloat(document.getElementById('rpe').value);
-      document.getElementById('rpe-display').innerText = rpeVal;
-      let rpeLabel = "余裕あり"; if(rpeVal >= 8) rpeLabel = "高負荷"; if(rpeVal >= 9.5) rpeLabel = "限界"; document.getElementById('rpe-label').innerText = rpeLabel; document.getElementById('rpe').style.accentColor = getRPEColor(rpeVal);
-      if (parseFloat(w) === 0) { document.getElementById('onerm-display').innerText = "自重"; document.getElementById('onerm-unit').style.display = "none"; } else { document.getElementById('onerm-display').innerText = calculate1RM(w, r, rpeVal); document.getElementById('onerm-unit').style.display = "inline"; }
-      const pr = getPR(ex); document.getElementById('pr-hint').style.display = (pr && parseFloat(w) > pr) ? 'flex' : 'none';
-      document.getElementById('record-btn-text').innerText = `第${logs.filter(l => l.date === dateStr && l.exercise === ex).length + 1}セットを記録`;
-    }
-
-    function updateUI() {
-      updateInputState(); renderLogView();
-    }
-
-    function renderLogView() {
-      const dateStr = document.getElementById('record-date').value || getTodayStr();
-      const ex = document.getElementById('exercise-input').value.trim();
-      document.getElementById('today-date-display').innerText = dateStr;
-      
-      const last = logs.find(l => l.exercise === ex && l.date !== dateStr); const container = document.getElementById('last-record');
-      if (last && ex !== "") { document.getElementById('last-record-date').innerText = `前回の記録 (${formatDate(last.date)})`; document.getElementById('last-record-val').innerHTML = `${last.weight === 0 ? '自重' : last.weight + 'kg'} × ${last.reps} <span style="font-size:13px;color:var(--text-tertiary);">RPE${last.rpe}</span>`; container.style.display = 'flex'; } else { container.style.display = 'none'; }
-      
-      const targetLogs = logs.filter(l => l.date === dateStr);
-      document.getElementById('today-logs').innerHTML = targetLogs.length ? targetLogs.map(l => buildLogRow(l, false)).join('') : `<div style="text-align:center;padding:4rem 0;background:var(--bg-primary);border-radius:var(--radius-xl);border:1px dashed var(--border);color:var(--text-tertiary);font-weight:700;font-size:15px;">この日の記録はありません</div>`;
-
-      // 過去のログ
-      const pastLogs = logs.filter(l => l.date !== dateStr);
-      const pastContainer = document.getElementById('past-logs');
-      if (!pastLogs.length) { pastContainer.innerHTML = ''; return; }
-      
-      const groupedByDate = pastLogs.reduce((acc, log) => { if (!acc[log.date]) acc[log.date] = []; acc[log.date].push(log); return acc; }, {});
-      let pastHtml = '<h3 style="font-size:16px; font-weight:800; margin:32px 0 12px 0; color:var(--text-secondary); padding:0 4px;">過去の記録</h3>';
-      
-      Object.keys(groupedByDate).sort((a,b) => new Date(b) - new Date(a)).slice(0, 10).forEach(date => {
-        const dayLogs = groupedByDate[date].sort((a,b) => a.id - b.id);
-        pastHtml += `<details><summary><span>${formatDate(date)}</span> <span style="font-size:12px;color:var(--text-tertiary);font-weight:600;">計${dayLogs.length}セット</span></summary><div class="details-content" style="padding:12px; display:flex; flex-direction:column; gap:8px;">${dayLogs.map(l => buildLogRow(l, false)).join('')}</div></details>`;
-      });
-      pastContainer.innerHTML = pastHtml;
-    }
-
-    function addLog() {
-      haptic(15); const weight = document.getElementById('weight').value; const reps = document.getElementById('reps').value; const exercise = document.getElementById('exercise-input').value.trim(); const dateStr = document.getElementById('record-date').value || getTodayStr(); const rpeVal = parseFloat(document.getElementById('rpe').value);
-      if(!weight || !reps || !exercise) { alert("種目を選択してください"); return; }
-      document.getElementById('suggest-list').style.display = 'none';
-      if (!getAllExercises().some(e => e.n === exercise)) { openCreateModal(exercise); return; }
-      
-      logs.unshift({ id: Date.now(), date: dateStr, exercise: exercise, weight: parseFloat(weight), reps: parseInt(reps), setNumber: logs.filter(l => l.date === dateStr && l.exercise === exercise).length + 1, rpe: rpeVal, oneRM: calculate1RM(weight, reps, rpeVal) });
-      logs.sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id); localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs));
-      
-      if(gapiAccessToken && localStorage.getItem("wt_last_sync")) { document.getElementById('sync-badge').className = 'sync-badge warning'; document.getElementById('sync-badge-text').innerText = "未同期"; }
-      updateUI();
-    }
-
-    function confirmDelete(id) {
-      haptic(10); 
-      if(confirm("この記録を削除しますか？")) { 
-        const log = logs.find(l => l.id === id); const ex = log ? log.exercise : null;
-        logs = logs.filter(l => l.id !== id); localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs)); 
-        
-        if(gapiAccessToken && localStorage.getItem("wt_last_sync")) { document.getElementById('sync-badge').className = 'sync-badge warning'; document.getElementById('sync-badge-text').innerText = "未同期"; } 
-        updateUI(); 
-        
-        const activeView = document.querySelector('.view.active').id;
-        if(activeView === 'view-history') renderHistoryTab();
-
-        const sheet = document.getElementById('history-detail-modal');
-        if (sheet && sheet.classList.contains('show') && ex) {
-          if (logs.filter(l => l.exercise === ex).length === 0) closeHistoryDetail(); else openHistoryDetail(ex);
-        }
-      }
-    }
-
-    function buildLogRow(log, showDate = false) {
-      const pr = getPR(log.exercise); const isPR = pr && log.weight > 0 && log.weight >= pr;
-      const badgeHtml = showDate ? `<span style="font-size:13px;font-weight:800;color:var(--text-secondary);background:var(--bg-secondary);padding:4px 10px;border-radius:8px;">${formatDate(log.date)}</span>` : `<span class="set-badge">${log.setNumber}</span>`;
-      const weightDisplay = log.weight === 0 ? `<span style="font-size:24px;font-weight:800;letter-spacing:-0.5px;">自重</span>` : `<span style="font-size:26px;font-weight:800;letter-spacing:-0.5px;">${log.weight}</span><span style="font-size:15px;font-weight:700;color:var(--text-secondary);margin:0 14px 0 2px;">kg</span>`;
-      return `<div class="log-item"><div class="log-header"><div class="log-title">${badgeHtml} <span>${log.exercise}</span> ${isPR ? `<span class="pr-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>PR</span>` : ''}</div><div style="display:flex; gap:4px;"><button class="action-btn" onclick="openEditModal(${log.id})"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button><button class="action-btn" onclick="confirmDelete(${log.id})"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div></div><div style="display:flex;align-items:baseline;justify-content:space-between;"><div>${weightDisplay}<span style="font-size:20px;font-weight:800;">× ${log.reps}</span><span style="font-size:15px;font-weight:700;color:var(--text-secondary);">rep</span></div><div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px;"><span style="font-size:13px;font-weight:800;color:#fff;background:${getRPEColor(log.rpe)};padding:3px 10px;border-radius:8px;">RPE ${log.rpe}</span><span style="font-size:12px;font-weight:700;color:var(--text-tertiary);">1RM: ${log.weight === 0 ? '自重' : log.oneRM + 'kg'}</span></div></div></div>`;
-    }
-
-    function setPRSort(mode) { haptic(10); prSortMode = mode; localStorage.setItem("wt_pr_sort", mode); renderHistoryTab(); }
-    function setPRView(mode) { haptic(10); prViewMode = mode; localStorage.setItem("wt_pr_view", mode); renderHistoryTab(); }
-
-    function getSparklineSVG(exLogs, color) {
-      const dailyMax = []; const grouped = exLogs.reduce((acc, log) => { if (!acc[log.date]) acc[log.date] = []; acc[log.date].push(log); return acc; }, {});
-      Object.keys(grouped).sort().forEach(date => { dailyMax.push(Math.max(...grouped[date].map(l => parseFloat(l.weight)||0))); });
-      if (dailyMax.length < 2) return `<svg width="100%" height="100%" viewBox="0 0 60 30"><circle cx="30" cy="15" r="4" fill="${color}"/></svg>`;
-      const min = Math.min(...dailyMax); const max = Math.max(...dailyMax); const range = max - min || 1; const H = 30, W = 60, PAD = 4;
-      const points = dailyMax.map((w, i) => `${PAD + (i / (dailyMax.length - 1)) * (W - PAD * 2)},${H - PAD - ((w - min) / range) * (H - PAD * 2)}`);
-      return `<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="${points.join(' ')}"/></svg>`;
-    }
-
-    function renderHistoryTab() {
-      const container = document.getElementById('pr-container'); 
-      const activeExercises = [...new Set(logs.map(l => l.exercise))];
-      if(activeExercises.length === 0) { container.innerHTML = `<p style="text-align:center;font-weight:700;color:var(--text-tertiary);padding:3rem;">記録がありません</p>`; return; }
-      
-      const CAT_ORDER = {"胸":1, "背中":2, "脚":3, "肩":4, "腕":5, "腹・体幹":6, "全身":7};
-      let prData = activeExercises.map(ex => { 
-        const exLogs = logs.filter(l => l.exercise === ex); 
-        const cat = getExerciseCategory(ex);
-        return { name: ex, cat: cat, catOrder: CAT_ORDER[cat] || 99, maxLog: exLogs.reduce((p, c) => ((parseFloat(p.weight)||0) > (parseFloat(c.weight)||0)) ? p : c), exLogs: exLogs }; 
-      });
-
-      if (prSortMode === 'category') { prData.sort((a, b) => a.catOrder !== b.catOrder ? a.catOrder - b.catOrder : a.name.localeCompare(b.name, 'ja')); } 
-      else { prData.sort((a, b) => a.name.localeCompare(b.name, 'ja')); }
-
-      let controlsHtml = `<div class="pr-controls"><select class="pr-sort-select" onchange="setPRSort(this.value)"><option value="category" ${prSortMode==='category'?'selected':''}>部位順に並べ替え</option><option value="name" ${prSortMode==='name'?'selected':''}>五十音順</option></select><div class="pr-view-toggle"><button class="pr-view-btn ${prViewMode==='grid'?'active':''}" onclick="setPRView('grid')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></button><button class="pr-view-btn ${prViewMode==='list'?'active':''}" onclick="setPRView('list')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button></div></div>`;
-      
-      let contentHtml = '';
-      if (prViewMode === 'grid') { 
-        contentHtml = '<div class="pr-grid">'; 
-        prData.forEach(item => { 
-          const wDisplay = item.maxLog.weight === 0 ? '自重' : `${item.maxLog.weight}<span style="font-size:16px;color:var(--text-secondary);">kg</span>`;
-          contentHtml += `<div class="pr-card" style="background: var(--pr-${getCatClass(item.cat)}-bg);" onclick="openHistoryDetail('${item.name}')"><p style="font-size:14px;font-weight:800;color:var(--text-secondary);margin:0 0 10px 0;display:flex;align-items:center;gap:8px;"><span class="cat-icon-wrapper ${getCatClass(item.cat)}" style="width:24px;height:24px;border-radius:6px;">${CAT_ICONS[item.cat]||CAT_ICONS["全身"]}</span>${item.name}</p><p style="font-size:32px;font-weight:800;margin:0 0 6px 0;color:var(--text-primary);letter-spacing:-0.5px;">${wDisplay}</p><p style="font-size:13px;font-weight:700;color:var(--text-tertiary);margin:0;display:flex;justify-content:space-between;"><span>×${item.maxLog.reps} <span style="color:${getRPEColor(item.maxLog.rpe)};">RPE${item.maxLog.rpe}</span></span><span>全${item.exLogs.length}セット</span></p></div>`; 
-        }); 
-        contentHtml += '</div>'; 
-      } else { 
-        contentHtml = '<div class="pr-list">'; 
-        prData.forEach(item => { 
-          const isDark = document.documentElement.getAttribute('data-theme')==='dark'; 
-          let fgColor = isDark ? '#d4d4d8' : '#52525b'; 
-          if(item.cat==='胸') fgColor=isDark?'#60a5fa':'#2563eb'; else if(item.cat==='背中') fgColor=isDark?'#4ade80':'#16a34a'; else if(item.cat==='脚') fgColor=isDark?'#facc15':'#ca8a04'; else if(item.cat==='肩') fgColor=isDark?'#fb923c':'#ea580c'; else if(item.cat==='腕') fgColor=isDark?'#c084fc':'#9333ea'; else if(item.cat==='腹・体幹') fgColor=isDark?'#f87171':'#dc2626'; 
-          const wDisplay = item.maxLog.weight === 0 ? '自重' : `${item.maxLog.weight}<span>kg</span>`;
-          contentHtml += `<div class="pr-list-item" style="background: var(--pr-${getCatClass(item.cat)}-bg);" onclick="openHistoryDetail('${item.name}')"><div class="pr-list-left"><span class="cat-icon-wrapper ${getCatClass(item.cat)}" style="width:36px;height:36px;border-radius:8px;">${CAT_ICONS[item.cat]||CAT_ICONS["全身"]}</span><div class="pr-list-info"><span class="pr-list-name">${item.name}</span><span class="pr-list-detail"><span>×${item.maxLog.reps}</span> <span style="color:${getRPEColor(item.maxLog.rpe)};">RPE${item.maxLog.rpe}</span></span></div></div><div class="pr-list-right"><div class="pr-list-graph">${getSparklineSVG(item.exLogs, fgColor)}</div><div class="pr-list-weight">${wDisplay}</div></div></div>`; 
-        }); 
-        contentHtml += '</div>'; 
-      }
-      container.innerHTML = controlsHtml + contentHtml;
-    }
-
-    function openHistoryDetail(ex) {
-      haptic(10);
-      document.getElementById('hd-title').innerText = ex;
-      
-      const isCustom = customExercises.some(ce => ce.n === ex);
-      const editBtnHtml = isCustom ? `<button onclick="openEditCustomModal('${ex}')" style="background:var(--bg-secondary); border:none; font-weight:800; color:var(--text-secondary); cursor:pointer; padding:6px 12px; border-radius:16px; transition:background 0.2s;">種目を編集</button>` : '';
-      document.getElementById('hd-header-actions').innerHTML = editBtnHtml + `<button onclick="closeHistoryDetail()" style="background:var(--bg-secondary); border:none; font-weight:800; color:var(--text-secondary); cursor:pointer; padding:6px 12px; border-radius:16px; transition:background 0.2s;">閉じる</button>`;
-
-      const exLogs = logs.filter(l => l.exercise === ex);
-      
-      const dailyMax = [];
-      const groupedByDate = exLogs.reduce((acc, log) => { if (!acc[log.date]) acc[log.date] = []; acc[log.date].push(log); return acc; }, {});
-      const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
-      
-      const graphDates = [...sortedDates].reverse().slice(-15);
-      graphDates.forEach(date => {
-        dailyMax.push(groupedByDate[date].reduce((prev, current) => ((parseFloat(prev.weight)||0) > (parseFloat(current.weight)||0)) ? prev : current));
-      });
-      
-      const graphContainer = document.getElementById('hd-graph');
-      if(dailyMax.length > 1) {
-        const weights = dailyMax.map(l => parseFloat(l.weight)||0);
-        const maxW = Math.max(...weights); 
-        const minW = Math.max(0, Math.min(...weights) - 5); 
-        const range = maxW - minW || 10;
-        const H = 160, W = 600, PAD = 44;
-        const points = dailyMax.map((l, i) => ({ x: PAD + (i / Math.max(dailyMax.length-1, 1)) * (W - PAD*2), y: H - PAD - (((parseFloat(l.weight)||0) - minW) / range) * (H - PAD*2), ...l }));
-        const pathD = points.map((p,i) => `${i===0?"M":"L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-        let svgHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible;margin-bottom:0.5rem; margin-top:0.5rem;">`;
-        [0, 0.5, 1].forEach(t => { 
-            const y = H - PAD - t * (H - PAD*2); 
-            const val = (minW + t * range).toFixed(0); 
-            svgHTML += `<line x1="${PAD}" x2="${W-PAD}" y1="${y}" y2="${y}" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="4 4" />
-            <text x="${PAD-8}" y="${y+4}" text-anchor="end" fill="var(--text-tertiary)" font-size="12" font-weight="700">${val}</text>`; 
-        });
-        svgHTML += `<path d="${pathD}" fill="none" stroke="var(--text-tertiary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 6"/>`;
-        points.forEach(p => { 
-            svgHTML += `<circle cx="${p.x}" cy="${p.y}" r="6" fill="${getRPEColor(p.rpe)}" stroke="var(--bg-primary)" stroke-width="2.5" />
-            <text x="${p.x}" y="${H-10}" text-anchor="middle" fill="var(--text-secondary)" font-size="11" font-weight="800">${formatDate(p.date)}</text>`; 
-        });
-        svgHTML += `</svg>`;
-        graphContainer.innerHTML = `<h4 style="margin:0 0 16px 0; font-size:14px; font-weight:800; color:var(--text-secondary);">MAX重量推移</h4>` + svgHTML;
-        graphContainer.style.display = 'block';
-      } else {
-        graphContainer.style.display = 'none';
-      }
-
-      let listHtml = '';
-      sortedDates.forEach((date, index) => {
-        const dayLogs = groupedByDate[date].sort((a,b) => a.setNumber - b.setNumber);
-        const isOpen = index === 0 ? 'open' : '';
-        const dayMaxLog = dayLogs.reduce((prev, current) => ((parseFloat(prev.weight)||0) > (parseFloat(current.weight)||0)) ? prev : current);
-        const dayMaxW = dayMaxLog.weight === 0 ? '自重' : dayMaxLog.weight + 'kg';
-        
-        listHtml += `<details ${isOpen}><summary><span>${formatDate(date)}</span> <span style="font-size:13px; color:var(--accent);">MAX: ${dayMaxW}</span></summary><div class="details-content">`;
-        dayLogs.forEach((log, idx) => {
-          const rpeColor = getRPEColor(log.rpe);
-          const weightDisplay = log.weight === 0 ? `<span style="font-size:20px;font-weight:800;letter-spacing:-0.5px;">自重</span>` : `<span style="font-size:22px;font-weight:800;letter-spacing:-0.5px;">${log.weight}</span><span style="font-size:13px;font-weight:700;color:var(--text-secondary);margin:0 10px 0 2px;">kg</span>`;
-          const borderStyle = idx === dayLogs.length - 1 ? 'border-bottom:none;' : 'border-bottom: 1px dashed var(--border);';
-          
-          listHtml += `
-            <div style="padding: 12px 16px; ${borderStyle} display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <span class="set-badge">${log.setNumber}</span>
-                <div>
-                  <div style="display:flex; align-items:baseline;">
-                    ${weightDisplay}
-                    <span style="font-size:18px;font-weight:800;">× ${log.reps}</span>
-                  </div>
-                  <div style="font-size:11px; font-weight:700; color:var(--text-tertiary); margin-top:2px;">1RM: ${log.weight===0?'自重':log.oneRM+'kg'}</div>
-                </div>
-              </div>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-size:11px;font-weight:800;color:#fff;background:${rpeColor};padding:2px 8px;border-radius:6px;">RPE ${log.rpe}</span>
-                <button class="action-btn" onclick="openEditModal(${log.id})" style="padding:4px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></button>
-              </div>
-            </div>
-          `;
-        });
-        listHtml += `</div></details>`;
-      });
-      
-      document.getElementById('hd-list').innerHTML = listHtml;
-      
-      const sheet = document.getElementById('history-detail-modal');
-      sheet.style.display = 'flex';
-      void sheet.offsetWidth;
-      sheet.classList.add('show');
-    }
-
-    function closeHistoryDetail() {
-      haptic();
-      const sheet = document.getElementById('history-detail-modal');
-      sheet.classList.remove('show');
-      setTimeout(() => {
-        sheet.style.display = 'none';
-        renderHistoryTab();
-      }, 300);
-    }
-
-    function setAnalysisPeriod(period) { haptic(10); localStorage.setItem("wt_analysis_period", period); renderAnalysisTab(); }
-
-    function renderAnalysisTab() {
-      const period = localStorage.getItem("wt_analysis_period") || "30";
-      document.getElementById('period-btn-7').classList.toggle('active', period === '7');
-      document.getElementById('period-btn-30').classList.toggle('active', period === '30');
-      document.getElementById('period-btn-365').classList.toggle('active', period === '365');
-      
-      const subtitleMap = { '7': '（直近1週間の適正ボリューム達成率）', '30': '（直近30日間の適正ボリューム達成率）', '365': '（直近1年間の適正ボリューム達成率）' };
-      document.getElementById('analysis-subtitle').innerText = subtitleMap[period] || '（適正ボリューム達成率）';
-
-      let days = 30;
-      const limitDate = new Date();
-      if (period === '7') { days = 7; limitDate.setDate(limitDate.getDate() - 7); }
-      else if (period === '30') { days = 30; limitDate.setDate(limitDate.getDate() - 30); }
-      else if (period === '365') { days = 365; limitDate.setDate(limitDate.getDate() - 365); }
-      
-      let targetLogs = logs.filter(l => new Date(l.date) >= limitDate);
-      
-      const stats = { "胸": 0, "背中": 0, "脚": 0, "肩": 0, "腕": 0, "腹・体幹": 0, "全身": 0 };
-      let totalScore = 0;
-
-      targetLogs.forEach(log => { 
-        const cat = getExerciseCategory(log.exercise); 
-        const impacts = getMuscleImpacts(log.exercise, cat);
-        let intensity = log.rpe ? (parseFloat(log.rpe) / 8.0) : 1.0;
-        for (const [muscle, impact] of Object.entries(impacts)) {
-          if (stats[muscle] !== undefined) {
-            const score = intensity * impact;
-            stats[muscle] += score;
-            totalScore += score;
-          }
-        }
-      });
-      
-      const TARGETS_PER_WEEK = { "胸": 12, "背中": 14, "脚": 14, "肩": 10, "腕": 10, "腹・体幹": 8 };
-      const k = days / 7;
-
-      const getColor = (cat) => { 
-        const val = stats[cat];
-        if (val === 0 || !TARGETS_PER_WEEK[cat]) return "var(--heat-0)";
-        const target = TARGETS_PER_WEEK[cat] * k;
-        const ratio = val / target;
-        if (ratio < 0.4) return "var(--heat-1)"; 
-        if (ratio > 1.5) return "var(--heat-3)"; 
-        return "var(--heat-2)"; 
-      };
-      
-      document.getElementById('body-map-render').innerHTML = `<div class="body-figure"><svg viewBox="0 0 100 220" width="130"><circle cx="50" cy="20" r="14" fill="var(--bg-secondary)"/><rect class="body-part" x="33" y="40" width="34" height="28" rx="6" fill="${getColor('胸')}"/><rect class="body-part" x="35" y="70" width="30" height="32" rx="4" fill="${getColor('腹・体幹')}"/><rect class="body-part" x="15" y="40" width="16" height="16" rx="8" fill="${getColor('肩')}"/><rect class="body-part" x="69" y="40" width="16" height="16" rx="8" fill="${getColor('肩')}"/><rect class="body-part" x="15" y="58" width="14" height="45" rx="7" fill="${getColor('腕')}"/><rect class="body-part" x="71" y="58" width="14" height="45" rx="7" fill="${getColor('腕')}"/><rect class="body-part" x="33" y="104" width="15" height="70" rx="7" fill="${getColor('脚')}"/><rect class="body-part" x="52" y="104" width="15" height="70" rx="7" fill="${getColor('脚')}"/></svg><span class="body-label">FRONT</span></div><div class="body-figure"><svg viewBox="0 0 100 220" width="130"><circle cx="50" cy="20" r="14" fill="var(--bg-secondary)"/><rect class="body-part" x="32" y="40" width="36" height="60" rx="6" fill="${getColor('背中')}"/><rect class="body-part" x="15" y="40" width="15" height="15" rx="7.5" fill="${getColor('肩')}"/><rect class="body-part" x="70" y="40" width="15" height="15" rx="7.5" fill="${getColor('肩')}"/><rect class="body-part" x="15" y="57" width="13" height="45" rx="6.5" fill="${getColor('腕')}"/><rect class="body-part" x="72" y="57" width="13" height="45" rx="6.5" fill="${getColor('腕')}"/><rect class="body-part" x="33" y="102" width="15" height="70" rx="7" fill="${getColor('脚')}"/><rect class="body-part" x="52" y="102" width="15" height="70" rx="7" fill="${getColor('脚')}"/></svg><span class="body-label">BACK</span></div>`;
-      
-      let advice = "";
-      const minScoreThreshold = period === "7" ? 5 : (period === "30" ? 10 : 30);
-      
-      if (totalScore < minScoreThreshold) { 
-        advice = "データが少ないため、まだ詳細分析できません。記録を増やしましょう！"; 
-      } else { 
-        const msgs = [];
-        const tChest = TARGETS_PER_WEEK["胸"] * k;
-        const tBack = TARGETS_PER_WEEK["背中"] * k;
-        const tLegs = TARGETS_PER_WEEK["脚"] * k;
-        const tShoulder = TARGETS_PER_WEEK["肩"] * k;
-        const tArms = TARGETS_PER_WEEK["腕"] * k;
-        const tCore = TARGETS_PER_WEEK["腹・体幹"] * k;
-
-        const totalTarget = Object.values(TARGETS_PER_WEEK).reduce((a,b)=>a+b,0) * k;
-        
-        if (period === '7') {
-          if (totalScore > totalTarget * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>今週は全体的にトレーニング量が多く、オーバートレーニングの兆候があります。</b><br>関節の痛みや強い疲労を感じる場合は、数日の完全休養やディロード（軽めのトレーニング）を検討してください。</div>");
-          if (stats["脚"] < tLegs * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>今週は下半身のトレーニングが不足気味です。</b><br>週の後半でスクワットなどを取り入れて、全身にバランスよく刺激を入れていきましょう。</div>");
-          else if (stats["脚"] > tLegs * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>今週は脚への負荷が非常に高いです。</b><br>膝や腰の疲労に注意し、しっかりとリカバリーに努めてください。</div>");
-          if (stats["胸"] > tChest * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>今週は胸のトレーニング量がやや過剰です。</b><br>肩関節の負担を減らすため、プレス種目を少し控えるか背中の種目に時間を割きましょう。</div>");
-          
-          if (stats["背中"] < stats["胸"] * 0.5 && stats["胸"] > 0) msgs.push("<div><b style='color:var(--text-primary);'>胸に対して背中のトレーニングが不足しています。</b><br>巻き肩を防ぐためにも、次回のトレーニングではロウイングやプル系を意識して取り入れてみてください。</div>");
-          else if (stats["背中"] < tBack * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>今週は背中のトレーニングが不足気味です。</b><br>背中は姿勢を保ち逆三角形を作るために重要です。プル系種目を取り入れましょう。</div>");
-          else if (stats["背中"] > tBack * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>今週は背中のトレーニング量が非常に多いです。</b><br>素晴らしい追い込みですが、腰への疲労蓄積に注意してください。</div>");
-          
-          if (stats["腕"] > tArms * 1.8) msgs.push("<div><b style='color:var(--text-primary);'>今週は腕（二頭・三頭）への負荷がかなり高くなっています。</b><br>腕は他部位のトレーニングでも酷使されるため、少し休ませたほうが筋肥大に繋がる可能性があります。</div>");
-          if (stats["肩"] < tShoulder * 0.4 && totalScore > totalTarget * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>今週は肩（三角筋）を直接刺激する種目が少ないようです。</b><br>レイズ系種目を追加すると、他のプレストレーニングの安定性向上にも繋がります。</div>");
-          if (stats["腹・体幹"] < tCore * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>今週は体幹部への直接的なアプローチが不足しています。</b><br>プランクやクランチなどを少し追加して、フリーウェイト時の体幹の安定力を底上げしましょう。</div>");
-        } else if (period === '30') {
-          if (totalScore > totalTarget * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>直近1ヶ月のボリュームが非常に高く、回復キャパシティを超えている可能性があります。</b><br>成長が停滞している場合は、1週間のディロード（負荷を落とす週）を設けるのが効果的です。</div>");
-          if (stats["脚"] < tLegs * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月間、脚のボリュームが最小有効ボリューム(MEV)に達していません。</b><br>下半身の筋肉量は全身の土台となるため、優先的に種目を追加することをお勧めします。</div>");
-          else if (stats["脚"] > tLegs * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月間、脚への負荷が極めて高い状態が続いています。</b><br>関節系の怪我を防ぐため、完全休養日を戦略的に設定しましょう。</div>");
-          if (stats["胸"] > tChest * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>直近1ヶ月、胸のトレーニング量が過剰（MRV超過）気味です。</b><br>肩の前側や肘に違和感がある場合は、プレス系種目を一時的に減らしてください。</div>");
-          
-          if (stats["背中"] < stats["胸"] * 0.5 && stats["胸"] > 0) msgs.push("<div><b style='color:var(--text-primary);'>直近1ヶ月の傾向として、胸のトレーニング量が背中を大きく上回っています。</b><br>長期的には姿勢の悪化や巻き肩、肩の痛みに繋がるため、背中（引く動作）のボリュームを意識して増やしましょう。</div>");
-          else if (stats["背中"] < tBack * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月、背中のトレーニングが全体的に不足しています。</b><br>背中は逆三角形のシルエット作りに不可欠です。メニューを見直してみましょう。</div>");
-          else if (stats["背中"] > tBack * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月、背中のトレーニング量が非常に多いです。</b><br>特に腰部のオーバートレーニングには気をつけてください。</div>");
-          
-          if (stats["腕"] > tArms * 1.8) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月間、腕のアイソレーション種目のボリュームが多すぎます。</b><br>腕の成長が止まっている場合、逆にセット数を減らして回復を促すアプローチが有効です。</div>");
-          if (stats["肩"] < tShoulder * 0.4 && totalScore > totalTarget * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>1ヶ月のトータルで見ると、肩のボリュームが不足しています。</b><br>肩の筋肉は回復が比較的早いため、週の複数日に分けてサイドレイズなどを取り入れると効果的です。</div>");
-          if (stats["腹・体幹"] < tCore * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>この1ヶ月間、腹筋群への直接的な刺激が足りていません。</b><br>姿勢維持の補助だけではなく、体幹専用の種目をルーティンに組み込むと全身の連動力が高まります。</div>");
-        } else if (period === '365') {
-          if (totalScore > totalTarget * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>この1年間、極めて高いハードワークを継続しています。</b><br>素晴らしい精神力ですが、慢性的な関節の摩耗を防ぐため、定期的にトレーニング強度を落とす『ピリオダイゼーション（期分け）』の導入をお勧めします。</div>");
-          if (stats["脚"] < tLegs * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>長期的（1年）に見ても、下半身のボリュームが明確に不足しています。</b><br>上半身ばかりが発達するアンバランスな体型になるリスクがあるため、脚のトレーニング日を固定することをお勧めします。</div>");
-          else if (stats["脚"] > tLegs * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>年間を通じて脚に凄まじいボリュームを割いています。</b><br>オーバーワークによる関節の怪我に十分注意し、定期的に休む期間を設けてください。</div>");
-          if (stats["胸"] > tChest * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>この1年、胸への負荷が非常に高く設定されています。</b><br>大胸筋の発達には良いですが、肩関節の怪我などの慢性障害には注意してください。</div>");
-          
-          if (stats["背中"] < stats["胸"] * 0.5 && stats["胸"] > 0) msgs.push("<div><b style='color:var(--text-primary);'>年間を通して『押す種目（胸）』が『引く種目（背中）』を上回る傾向が定着しています。</b><br>将来的な怪我や巻き肩を防ぎ、美しい姿勢を作るため、抜本的なメニューの改訂をご検討ください。</div>");
-          else if (stats["背中"] < tBack * 0.4) msgs.push("<div><b style='color:var(--text-primary);'>この1年間、背中へのアプローチが圧倒的に不足しています。</b><br>ボディメイクにおいて背中の発達は最重要課題の一つです。プルダウンやロウイングを徹底しましょう。</div>");
-          else if (stats["背中"] > tBack * 1.5) msgs.push("<div><b style='color:var(--text-primary);'>1年間、背中を非常に重点的に鍛え上げています。</b><br>見事なボリュームですが、疲労が抜けない時期があれば種目を絞り込んでみましょう。</div>");
-          
-          if (stats["腕"] > tArms * 1.8) msgs.push("<div><b style='color:var(--text-primary);'>年間を通じて腕のトレーニングに膨大なリソースを割いています。</b><br>もし腕の太さが頭打ちになっているなら、完全にオーバートレーニングです。勇気を持って腕の種目を半分に減らしてみてください。</div>");
-          if (stats["肩"] < tShoulder * 0.4 && totalScore > totalTarget * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>この1年間、肩へのアプローチが手薄な状態が続いています。</b><br>逆三角形の美しいシルエットを作るには、サイドレイズやショルダープレスを長期的かつ計画的にこなす必要があります。</div>");
-          if (stats["腹・体幹"] < tCore * 0.3) msgs.push("<div><b style='color:var(--text-primary);'>年間を通して、腹筋・体幹部への直接的なトレーニングがほぼ行われていません。</b><br>高重量のスクワットやデッドリフトを行う際の怪我を防ぐためにも、強靭な体幹作りは必須です。</div>");
-        }
-
-        if (msgs.length === 0) {
-          if (period === '7') advice = "<div style='display:flex;gap:10px;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#22c55e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='flex-shrink:0;'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'></polygon></svg><div><b style='color:var(--text-primary);'>今週は全身にバランス良く刺激が入っています！</b><br>素晴らしいペースです、この調子で怪我なく進めていきましょう。</div></div>";
-          else if (period === '30') advice = "<div style='display:flex;gap:10px;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#22c55e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='flex-shrink:0;'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'></polygon></svg><div><b style='color:var(--text-primary);'>直近1ヶ月、非常に美しいバランスでトレーニングできています！</b><br>すべての部位が適正ボリューム内に収まっています。</div></div>";
-          else advice = "<div style='display:flex;gap:10px;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#22c55e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='flex-shrink:0;'><polygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'></polygon></svg><div><b style='color:var(--text-primary);'>この1年間、完璧なバランスで全身のトレーニングを継続できています！</b><br>理想的なボディメイクが進行しています。現在のプログラムはあなたに非常に合っています。</div></div>";
-        } else {
-          advice = msgs.map(m => {
-            const strokeColor = m.includes('過剰') || m.includes('限界') || m.includes('高い') || m.includes('オーバートレーニング') || m.includes('凄まじい') || m.includes('多い') ? '#ef4444' : '#b8a760';
-            return `<div style='display:flex;gap:10px;'><svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='${strokeColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='flex-shrink:0;'><circle cx='12' cy='12' r='10'></circle><line x1='12' y1='16' x2='12' y2='12'></line><line x1='12' y1='8' x2='12.01' y2='8'></line></svg>${m}</div>`;
-          }).join("");
-        }
-      }
-      document.getElementById('analysis-advice').innerHTML = advice;
-
-      let barsHtml = ""; ["胸", "背中", "脚", "肩", "腕", "腹・体幹"].forEach(cat => { 
-        const val = stats[cat]; 
-        const target = TARGETS_PER_WEEK[cat] ? TARGETS_PER_WEEK[cat] * k : 1;
-        const percent = Math.round((val / target) * 100); 
-        barsHtml += `<div class="stat-bar-container"><div class="stat-bar-header"><span style="display:flex; align-items:center; gap:8px;"><div class="cat-icon-wrapper ${getCatClass(cat)}" style="width:20px;height:20px;border-radius:5px;">${CAT_ICONS[cat]}</div>${cat}</span><span style="color:var(--text-primary); font-weight:800;">${percent}% <span style="font-size:11px;color:var(--text-tertiary);font-weight:700;">達成率</span></span></div><div class="stat-bar-bg"><div class="stat-bar-fill" style="width: ${Math.min(100, percent)}%; background: ${getColor(cat)}"></div></div></div>`; 
-      });
-      document.getElementById('analysis-bars').innerHTML = barsHtml;
-    }
-
-    function exportDataLocal() { haptic(20); const data = { logs: logs, customExercises: customExercises }; const blob = new Blob([JSON.stringify(data)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `workout_backup_${getTodayStr()}.json`; a.click(); }
-    function importDataLocal(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); logs = data.logs; customExercises = data.customExercises; localStorage.setItem("wt_logs_html_v3", JSON.stringify(logs)); localStorage.setItem("wt_custom_ex_v5", JSON.stringify(customExercises)); alert("復元完了！"); location.reload(); } catch(err) { alert("失敗"); } }; reader.readAsText(file); }
-    function resetData() { if(confirm("初期化しますか？")) { localStorage.removeItem("wt_logs_html_v3"); localStorage.removeItem("wt_custom_ex_v5"); localStorage.removeItem("wt_last_sync"); location.reload(); } }
-  </script>
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
 </body>
 </html>
