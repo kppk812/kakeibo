@@ -324,7 +324,7 @@ select.m3-input {
         <span class="fixed-total-label">月の合計固定支出</span>
         <span class="fixed-total-val" style="color:var(--danger);" id="fixed-exp-total">¥0</span>
       </div>
-      <button class="add-fixed-btn" onclick="openModal('fe'); lightVibe();"><i class="ti ti-plus"></i> 固定支出を追加</button>
+      <button class="add-fixed-btn" onclick="openModal('fe')"><i class="ti ti-plus"></i> 固定支出を追加</button>
     </div>
   </div>
   <div class="section">
@@ -335,7 +335,7 @@ select.m3-input {
         <span class="fixed-total-label">月の合計固定収入</span>
         <span class="fixed-total-val" style="color:var(--success);" id="fixed-inc-total">¥0</span>
       </div>
-      <button class="add-fixed-btn" onclick="openModal('fi'); lightVibe();"><i class="ti ti-plus"></i> 固定収入を追加</button>
+      <button class="add-fixed-btn" onclick="openModal('fi')"><i class="ti ti-plus"></i> 固定収入を追加</button>
     </div>
   </div>
   <div class="section">
@@ -364,8 +364,8 @@ select.m3-input {
     <div class="card">
       <button class="action-btn" onclick="authAndSync('save')" style="color:var(--primary);"><i class="ti ti-cloud-upload"></i> Driveへ保存</button>
       <button class="action-btn" onclick="authAndSync('load')" style="color:var(--success);"><i class="ti ti-cloud-download"></i> Driveから復元</button>
-      <button class="action-btn" onclick="lightVibe(); exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
-      <button class="action-btn" onclick="lightVibe(); document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
+      <button class="action-btn" onclick="exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
+      <button class="action-btn" onclick="document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
       <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)">
       <button class="danger-btn" onclick="if(confirm('全データを削除しますか？'))clearAll()"><i class="ti ti-trash"></i> データ全削除</button>
     </div>
@@ -394,7 +394,7 @@ select.m3-input {
 <script>
 /* ================= 触覚フィードバック ================= */
 function lightVibe() {
-  if (navigator.vibrate) navigator.vibrate(5);
+  if (navigator.vibrate) navigator.vibrate(1); 
 }
 
 /* ================= テーマ設定とアドレスバーの連動 ================= */
@@ -473,7 +473,6 @@ function getCatColor(cat){
   } 
   return catColorMap[cat]; 
 }
-
 let D = { expenses:[], income:[], fixedIncome:[], fixedExpense:[], expCats:[], incCats:[], deletedFixed:[] };
 try{const s=localStorage.getItem('kakeibo_v6'); if(s)D=JSON.parse(s);}catch(e){}
 
@@ -483,7 +482,6 @@ D.expenses=(D.expenses||[]).map(e=>({...e,date:e.date||ymdLocal(new Date()),amou
 if(!D.expCats||!D.expCats.length)D.expCats=['食費','交通費','日用品','娯楽','医療','光熱費','通信費','その他'];
 if(!D.incCats||!D.incCats.length)D.incCats=['給与','副業','ボーナス','その他'];
 
-// カテゴリ色を起動時に固定割り当て
 D.expCats.forEach(c => getCatColor(c));
 D.incCats.forEach(c => getCatColor(c));
 
@@ -578,15 +576,15 @@ function renderFixedLists(){
 }
 
 function delFixed(t,id){ lightVibe(); if(t==='income')D.fixedIncome=D.fixedIncome.filter(f=>String(f.id)!==String(id)); else D.fixedExpense=D.fixedExpense.filter(f=>String(f.id)!==String(id)); save(); renderFixedLists(); refresh(); }
-function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
-function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
+function openModal(id){ lightVibe(); document.getElementById('modal-'+id).classList.add('open'); }
+function closeModal(id){ lightVibe(); document.getElementById('modal-'+id).classList.remove('open'); }
 function saveFixed(t){ lightVibe(); const p=t==='income'?'fi':'fe', name=document.getElementById(p+'-name').value.trim(), amount=+document.getElementById(p+'-amount').value; if(!name||!amount)return; if(t==='income')D.fixedIncome.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); else D.fixedExpense.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); document.getElementById(p+'-name').value=''; closeModal(p); save(); renderFixedLists(); refresh(); }
 
 function updateMonthLabels(){ const txt=curMonth.getFullYear()+'年'+(curMonth.getMonth()+1)+'月'; const val=`${curMonth.getFullYear()}-${('0'+(curMonth.getMonth()+1)).slice(-2)}`; document.querySelectorAll('.month-label').forEach(el=>el.textContent=txt); document.querySelectorAll('.month-picker').forEach(el=>el.value=val); }
 function jumpMonth(val){ lightVibe(); if(!val)return; const parts=val.split('-'); curMonth=new Date(parts[0], parts[1]-1, 1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 function changeMonth(dir){ lightVibe(); curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+dir,1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 
-function showPage(n,btn){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById('page-'+n).classList.add('active'); btn.classList.add('active'); if(n==='home'||n==='income')refresh(); if(n==='stats')renderStats(); }
+function showPage(n,btn){ lightVibe(); document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById('page-'+n).classList.add('active'); btn.classList.add('active'); if(n==='home'||n==='income')refresh(); if(n==='stats')renderStats(); }
 function switchStat(t,btn){ lightVibe(); document.querySelectorAll('.stat-tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active')); document.getElementById('st-'+t).classList.add('active'); btn.classList.add('active'); renderStatTab(t); }
 
 function renderStats(){ renderTopPie(); const a=document.querySelector('.stat-tab.active'); if(a)renderStatTab(a.id.replace('st-','')); }
@@ -626,9 +624,9 @@ function renderStatTab(t){
   }
 }
 
-function exportCSV(){ const e=(s)=>`"${String(s||'').replace(/"/g,'""')}"`; let c="日付,区分,カテゴリ,金額,メモ\n"; const all=[...D.expenses.map(x=>({...x,t:'支出'})),...D.income.map(x=>({...x,t:'収入'}))].sort((a,b)=>a.date.localeCompare(b.date)); all.forEach(x=>{c+=`${x.date},${x.t},${e(x.cat)},${x.amount},${e(x.note)}\n`}); const bom=new Uint8Array([0xEF,0xBB,0xBF]), blob=new Blob([bom,c],{type:'text/csv'}), url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=`kakeibo_${ymdLocal(new Date())}.csv`; a.click(); }
-function importCSV(ev){ const f=ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{ const lines=e.target.result.split(/\r\n|\n/); for(let i=1;i<lines.length;i++){ const l=lines[i].trim(); if(!l)continue; const c=l.split(','); if(c.length>=4){ const d=c[0], t=c[1], cat=c[2].replace(/"/g,''), am=parseInt(c[3]); if(t==='支出'){D.expenses.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.expCats.includes(cat))D.expCats.push(cat);} else{D.income.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.incCats.includes(cat))D.incCats.push(cat);}} } save(); refresh(); alert('完了'); }; r.readAsText(f); }
-function clearAll(){ localStorage.clear(); location.reload(); }
+function exportCSV(){ lightVibe(); const e=(s)=>`"${String(s||'').replace(/"/g,'""')}"`; let c="日付,区分,カテゴリ,金額,メモ\n"; const all=[...D.expenses.map(x=>({...x,t:'支出'})),...D.income.map(x=>({...x,t:'収入'}))].sort((a,b)=>a.date.localeCompare(b.date)); all.forEach(x=>{c+=`${x.date},${x.t},${e(x.cat)},${x.amount},${e(x.note)}\n`}); const bom=new Uint8Array([0xEF,0xBB,0xBF]), blob=new Blob([bom,c],{type:'text/csv'}), url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=`kakeibo_${ymdLocal(new Date())}.csv`; a.click(); }
+function importCSV(ev){ lightVibe(); const f=ev.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=(e)=>{ const lines=e.target.result.split(/\r\n|\n/); for(let i=1;i<lines.length;i++){ const l=lines[i].trim(); if(!l)continue; const c=l.split(','); if(c.length>=4){ const d=c[0], t=c[1], cat=c[2].replace(/"/g,''), am=parseInt(c[3]); if(t==='支出'){D.expenses.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.expCats.includes(cat))D.expCats.push(cat);} else{D.income.push({id:Date.now()+Math.random(),date:d,amount:am,cat:cat,note:c[4]||''}); if(!D.incCats.includes(cat))D.incCats.push(cat);}} } save(); refresh(); alert('完了'); }; r.readAsText(f); }
+function clearAll(){ lightVibe(); localStorage.clear(); location.reload(); }
 function refresh(){
   updateMetrics(); applyFixed(curKey());
   const es=document.getElementById('exp-search'); if(es)es.value='';
