@@ -12,108 +12,211 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
+/* ================= CSS変数 (テーマカラー) ================= */
+:root, [data-theme="light"] {
+  --bg-color: #F6F8FC;
+  --text-main: #1F1F1F;
+  --text-sub: #444746;
+  --text-muted: #727775;
+  --card-bg: #FFFFFF;
+  --input-bg: #F0F4F9;
+  --input-focus: #E1E9F4;
+  --primary: #0A56D1;
+  --on-primary: #FFFFFF;
+  --primary-container: #D3E3FD;
+  --on-primary-container: #041E49;
+  --danger: #BA1A1A;
+  --danger-container: #FFDAD6;
+  --success: #146C2E;
+  --success-container: #E8F5E9;
+  --border-color: #E1E3E8;
+  --list-border: #F0F4F9;
+  --total-bar-bg: #F8FAFD;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121316;
+  --text-main: #E3E3E3;
+  --text-sub: #C4C7C5;
+  --text-muted: #8E9196;
+  --card-bg: #1E1F22;
+  --input-bg: #2A2B2F;
+  --input-focus: #35373C;
+  --primary: #A8C7FA;
+  --on-primary: #041E49;
+  --primary-container: #004A77;
+  --on-primary-container: #D3E3FD;
+  --danger: #FFB4AB;
+  --danger-container: #93000A;
+  --success: #81C995;
+  --success-container: #0F5223;
+  --border-color: #35373C;
+  --list-border: #2A2B2F;
+  --total-bar-bg: #1A1C1E;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-color: #121316;
+    --text-main: #E3E3E3;
+    --text-sub: #C4C7C5;
+    --text-muted: #8E9196;
+    --card-bg: #1E1F22;
+    --input-bg: #2A2B2F;
+    --input-focus: #35373C;
+    --primary: #A8C7FA;
+    --on-primary: #041E49;
+    --primary-container: #004A77;
+    --on-primary-container: #D3E3FD;
+    --danger: #FFB4AB;
+    --danger-container: #93000A;
+    --success: #81C995;
+    --success-container: #0F5223;
+    --border-color: #35373C;
+    --list-border: #2A2B2F;
+    --total-bar-bg: #1A1C1E;
+  }
+}
+
+/* ダークモード時の影の調整 */
+[data-theme="dark"] .card, 
+[data-theme="dark"] .metric, 
+[data-theme="dark"] .month-ctrl,
+[data-theme="dark"] .modal {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .card, 
+  :root:not([data-theme="light"]) .metric, 
+  :root:not([data-theme="light"]) .month-ctrl,
+  :root:not([data-theme="light"]) .modal {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+}
+
 *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
-body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-color:transparent;}
+body{background:var(--bg-color);color:var(--text-main);font-size:15px; -webkit-tap-highlight-color:transparent; transition: background 0.3s, color 0.3s;}
 .app{max-width:680px;margin:0 auto;padding:0 0 100px}
 .topbar{padding:24px 20px 12px; display:flex; justify-content:space-between; align-items:center;}
-.topbar-title{font-size:28px;font-weight:800;color:#1F1F1F;letter-spacing:-0.5px}
-.topbar-title span{color:#0A56D1}
-.backup-status{font-size:13px; font-weight:800; color:#444746; background:#E1E9F4; padding:6px 14px; border-radius:999px; display:flex; align-items:center; gap:4px;}
+.topbar-title{font-size:28px;font-weight:800;color:var(--text-main);letter-spacing:-0.5px}
+.topbar-title span{color:var(--primary)}
+.backup-status{font-size:13px; font-weight:800; color:var(--text-sub); background:var(--input-focus); padding:6px 14px; border-radius:999px; display:flex; align-items:center; gap:4px;}
 
 /* メトリクス */
 .metrics-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 20px}
-.metric{background:#fff;border-radius:28px;padding:20px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.04)}
-.metric-label{font-size:12px;color:#444746;margin-bottom:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
-.metric-val{font-size:24px;font-weight:800;color:#1F1F1F}
-.metric-val.exp{color:#BA1A1A}
-.metric-val.bal.pos{color:#146C2E}
-.metric-val.bal.neg{color:#BA1A1A}
+.metric{background:var(--card-bg);border-radius:28px;padding:20px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,0.04); transition: background 0.3s, box-shadow 0.3s;}
+.metric-label{font-size:12px;color:var(--text-sub);margin-bottom:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase}
+.metric-val{font-size:24px;font-weight:800;color:var(--text-main)}
+.metric-val.exp{color:var(--danger)}
+.metric-val.bal.pos{color:var(--success)}
+.metric-val.bal.neg{color:var(--danger)}
 
 /* ナビ */
 .nav{display:flex;gap:8px;margin:12px 20px 24px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
-.nav-btn{flex:1;min-width:70px;padding:12px 0;border-radius:24px;border:none;background:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:#444746;font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.02);transition:all 0.3s cubic-bezier(0.2,0,0,1)}
-.nav-btn i{font-size:24px;color:#444746;}
-.nav-btn.active{background:#D3E3FD;color:#041E49;box-shadow:none;transform:scale(1.02)}
-.nav-btn.active i{color:#041E49}
+.nav-btn{flex:1;min-width:70px;padding:12px 0;border-radius:24px;border:none;background:var(--card-bg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text-muted);font-size:12px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.02);transition:all 0.3s cubic-bezier(0.2,0,0,1)}
+.nav-btn i{font-size:24px;color:var(--text-muted);}
+.nav-btn.active{background:var(--primary-container);color:var(--on-primary-container);box-shadow:none;transform:scale(1.02)}
+.nav-btn.active i{color:var(--on-primary-container)}
 
 /* ページ */
 .page{display:none;animation:fade 0.3s ease}.page.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .section{padding:0 20px;margin-bottom:24px}
-.section-label{font-size:13px;font-weight:800;color:#444746;letter-spacing:0.5px;margin-bottom:12px;text-transform:uppercase}
-.card{background:#fff;border-radius:28px;padding:20px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.04)}
+.section-label{font-size:13px;font-weight:800;color:var(--text-sub);letter-spacing:0.5px;margin-bottom:12px;text-transform:uppercase}
+.card{background:var(--card-bg);border-radius:28px;padding:20px;margin-bottom:12px;box-shadow:0 4px 24px rgba(0,0,0,0.04); transition: background 0.3s, box-shadow 0.3s;}
 
 /* 入力と検索 */
 .input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .cat-input-row{display:flex;gap:12px;margin-bottom:12px}
 .cat-input-row .m3-input{flex:1}
-.m3-input{width:100%;padding:16px 18px;border:none;border-radius:16px;font-size:15px;background:#F0F4F9;color:#1F1F1F;outline:none;appearance:none;transition:background 0.2s}
-.m3-input:focus{background:#E1E9F4;box-shadow:inset 0 0 0 2px #0A56D1}
+.m3-input{width:100%;padding:16px 18px;border:none;border-radius:16px;font-size:15px;background:var(--input-bg);color:var(--text-main);outline:none;appearance:none;transition:background 0.2s, box-shadow 0.2s;}
+.m3-input:focus{background:var(--input-focus);box-shadow:inset 0 0 0 2px var(--primary)}
+.m3-input::placeholder{color:var(--text-muted)}
+
+/* セレクトボックスのカスタムデザイン */
+select.m3-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23727775" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+[data-theme="dark"] select.m3-input,
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) select.m3-input {
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%238E9196" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>');
+  }
+}
+
 .search-wrapper { position: relative; margin-bottom: 16px; }
-.search-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #727775; font-size: 20px; }
+.search-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 20px; }
 .search-wrapper input { padding-left: 48px; border-radius: 999px; }
 
 /* ボタン */
-.fab{width:100%;padding:18px;border-radius:999px;border:none;background:#0A56D1;color:#fff;font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 6px 16px rgba(10,86,209,0.25);transition:all 0.2s}
+.fab{width:100%;padding:18px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 6px 16px rgba(10,86,209,0.25);transition:all 0.2s}
 .fab:active{transform:scale(0.96)}
-.del-btn{background:#F0F4F9;border:none;color:#444746;cursor:pointer;width:36px;height:36px;border-radius:12px;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;transition:background 0.2s}
-.del-btn:active{background:#E1E9F4}
-.add-fixed-btn{display:flex;align-items:center;gap:8px;color:#0A56D1;background:#F0F4F9;border:none;border-radius:16px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;justify-content:center}
-.danger-btn{padding:16px;border-radius:24px;border:none;background:#FFDAD6;color:#BA1A1A;cursor:pointer;font-size:15px;font-weight:800;width:100%}
-.action-btn{padding:16px;border-radius:24px;border:none;background:#F0F4F9;color:#1F1F1F;cursor:pointer;font-size:15px;font-weight:800;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
-.cat-add-btn{border-radius:16px;font-weight:800;font-size:15px;padding:0 24px;border:none;background:#D3E3FD;color:#041E49;cursor:pointer;white-space:nowrap;transition:background 0.2s}
-.cat-add-btn:active{background:#B4CFFB}
+.del-btn{background:var(--input-bg);border:none;color:var(--text-sub);cursor:pointer;width:36px;height:36px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;transition:background 0.2s;position:relative;z-index:2;}
+.del-btn:active{background:var(--input-focus)}
+.add-fixed-btn{display:flex;align-items:center;gap:8px;color:var(--primary);background:var(--input-bg);border:none;border-radius:999px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;justify-content:center}
+.danger-btn{padding:16px;border-radius:999px;border:none;background:var(--danger-container);color:var(--danger);cursor:pointer;font-size:15px;font-weight:800;width:100%}
+.action-btn{padding:16px;border-radius:999px;border:none;background:var(--input-bg);color:var(--text-main);cursor:pointer;font-size:15px;font-weight:800;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+.cat-add-btn{border-radius:999px;font-weight:800;font-size:15px;padding:0 24px;border:none;background:var(--primary-container);color:var(--on-primary-container);cursor:pointer;white-space:nowrap;transition:background 0.2s}
+.cat-add-btn:active{background:var(--input-focus)}
+.btn-ghost{flex:1;padding:16px;border-radius:999px;border:none;background:var(--input-bg);cursor:pointer;font-size:15px;font-weight:700;color:var(--text-main)}
+.btn-filled{flex:1;padding:16px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);cursor:pointer;font-size:15px;font-weight:800}
 
 /* リストアイテム */
-.list-item{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #F0F4F9}
+.list-item{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--list-border)}
 .list-item:last-child{border-bottom:none}
-.item-icon{width:48px;height:48px;border-radius:24px;background:#D3E3FD;display:flex;align-items:center;justify-content:center;font-size:22px;color:#0A56D1;flex-shrink:0}
-.item-body{flex:1;min-width:0;border-radius:12px;padding:4px;transition:background 0.2s}
-.item-body.editable:active{background:#F0F4F9}
-.item-cat{font-size:16px;font-weight:700;color:#1F1F1F;display:flex;align-items:center}
-.item-note{font-size:13px;color:#444746;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-icon{width:48px;height:48px;border-radius:24px;background:var(--primary-container);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--primary);flex-shrink:0}
+.item-body{flex:1;min-width:0;border-radius:12px;padding:4px;transition:background 0.2s;position:relative;z-index:1;}
+.item-body.editable:active{background:var(--input-bg)}
+.item-cat{font-size:16px;font-weight:700;color:var(--text-main);display:flex;align-items:center}
+.item-note{font-size:13px;color:var(--text-sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item-right{text-align:right;flex-shrink:0}
 .item-amount{font-size:17px;font-weight:800}
-.item-amount.e{color:#BA1A1A}
-.item-amount.i{color:#146C2E}
-.item-date{font-size:12px;color:#727775;margin-top:2px;font-weight:600}
-.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;background:#E1E9F4;color:#041E49;margin-left:8px}
+.item-amount.e{color:var(--danger)}
+.item-amount.i{color:var(--success)}
+.item-date{font-size:12px;color:var(--text-muted);margin-top:2px;font-weight:600}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;background:var(--input-bg);color:var(--text-main);margin-left:8px}
 
-.fixed-total-bar{display:flex;justify-content:space-between;align-items:center;padding:16px;background:#F8FAFD;border-radius:16px;margin-top:16px;border:1px dashed #D3E3FD}
-.fixed-total-label{font-size:13px;font-weight:700;color:#444746}
-.fixed-total-val{font-size:18px;font-weight:800;color:#1F1F1F}
-.fixed-row{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid #F0F4F9}
+.fixed-total-bar{display:flex;justify-content:space-between;align-items:center;padding:16px;background:var(--total-bar-bg);border-radius:16px;margin-top:16px;border:none;box-shadow:inset 0 0 0 1px var(--border-color)}
+.fixed-total-label{font-size:13px;font-weight:700;color:var(--text-sub)}
+.fixed-total-val{font-size:18px;font-weight:800;color:var(--text-main)}
+.fixed-row{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--list-border)}
 .fixed-row:last-child{border-bottom:none}
-.fixed-label{font-size:16px;font-weight:700;color:#1F1F1F}
-.fixed-sub{font-size:13px;color:#444746;margin-top:2px}
+.fixed-label{font-size:16px;font-weight:700;color:var(--text-main)}
+.fixed-sub{font-size:13px;color:var(--text-sub);margin-top:2px}
 
-/* 月次コントロール（ジャンプ機能付き） */
-.month-ctrl{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;background:#fff;padding:8px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,0.03)}
+/* 月次コントロール */
+.month-ctrl{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;background:var(--card-bg);padding:8px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,0.03)}
 .month-ctrl-center{position:relative;display:flex;align-items:center;justify-content:center;flex:1;}
-.month-ctrl-center span{font-size:18px;font-weight:800;color:#1F1F1F}
+.month-ctrl-center span{font-size:18px;font-weight:800;color:var(--text-main)}
 .month-picker{position:absolute;opacity:0;top:0;left:0;width:100%;height:100%;cursor:pointer;}
-.arrow-btn{width:44px;height:44px;border-radius:50%;border:none;background:#F0F4F9;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
-.arrow-btn:active{background:#E1E9F4}
+.arrow-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--input-bg);color:var(--text-main);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.arrow-btn:active{background:var(--input-focus)}
 
 /* 集計タブ */
 .tab-pills{display:flex;gap:8px;margin-bottom:20px;background:none;padding:0}
-.pill{flex:1;padding:12px;border-radius:999px;border:1px solid #E1E3E8;background:#fff;cursor:pointer;font-size:14px;font-weight:700;color:#444746;text-align:center;transition:all 0.2s}
-.pill.active{background:#041E49;color:#fff;border-color:#041E49}
+.pill{flex:1;padding:12px;border-radius:999px;border:1px solid var(--border-color);background:var(--card-bg);cursor:pointer;font-size:14px;font-weight:700;color:var(--text-sub);text-align:center;transition:all 0.2s}
+.pill.active{background:var(--primary-container);color:var(--on-primary-container);border-color:var(--primary-container)}
 .stat-tab{display:none;animation:fade 0.3s ease}.stat-tab.active{display:block}
-.empty-state{text-align:center;padding:40px 20px;color:#727775;font-size:15px;font-weight:600}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:15px;font-weight:600}
 .pie-section{display:grid;grid-template-columns:160px 1fr;gap:24px;align-items:center}
 @media (max-width: 400px) { .pie-section{grid-template-columns: 1fr; justify-items: center; gap: 16px;} }
-.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;font-weight:600;color:#1F1F1F}
+.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;font-weight:600;color:var(--text-main)}
 .legend-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
 
 /* モーダル */
-.modal-wrap{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:100}
+.modal-wrap{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:100}
 .modal-wrap.open{display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:#FDFBFF;border-radius:32px;padding:28px;width:100%;max-width:360px;box-shadow:0 24px 48px rgba(0,0,0,0.15)}
-.modal-head{font-size:22px;font-weight:800;margin-bottom:20px}
+.modal{background:var(--card-bg);border-radius:32px;padding:28px;width:100%;max-width:360px;box-shadow:0 24px 48px rgba(0,0,0,0.3); transition: background 0.3s, box-shadow 0.3s;}
+.modal-head{font-size:22px;font-weight:800;margin-bottom:20px;color:var(--text-main)}
 .modal-foot{display:flex;gap:12px;margin-top:24px}
-.cat-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;background:#fff;font-size:14px;font-weight:700;margin:4px;border:1px solid #E1E3E8}
-.cat-chip .x{font-size:16px;color:#727775;cursor:pointer;padding-left:4px}
+.cat-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;background:var(--input-bg);font-size:14px;font-weight:700;color:var(--text-main);margin:4px;border:1px solid var(--border-color)}
+.cat-chip .x{font-size:16px;color:var(--text-muted);cursor:pointer;padding-left:4px}
 </style>
 </head>
 <body>
@@ -139,7 +242,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
   <div class="section">
     <div class="card">
       <div class="input-row"><input class="m3-input" type="number" id="exp-amount" placeholder="金額" inputmode="numeric"><input class="m3-input" type="date" id="exp-date"></div>
-      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="exp-cat"></select><input class="m3-input" type="text" id="exp-note" placeholder="メモ"></div>
+      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="exp-cat" onchange="handleCatChange(this, 'exp')"></select><input class="m3-input" type="text" id="exp-note" placeholder="メモ"></div>
       <button class="fab" onclick="addExpense()">支出を記録</button>
     </div>
   </div>
@@ -161,7 +264,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
   <div class="section">
     <div class="card">
       <div class="input-row"><input class="m3-input" type="number" id="inc-amount" placeholder="金額" inputmode="numeric"><input class="m3-input" type="date" id="inc-date"></div>
-      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="inc-cat"></select><input class="m3-input" type="text" id="inc-note" placeholder="メモ"></div>
+      <div class="input-row" style="margin-bottom:0"><select class="m3-input" id="inc-cat" onchange="handleCatChange(this, 'inc')"></select><input class="m3-input" type="text" id="inc-note" placeholder="メモ"></div>
       <button class="fab" onclick="addIncome()">収入を記録</button>
     </div>
   </div>
@@ -193,7 +296,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
       <div class="pie-section">
         <div style="position:relative; width:160px; height:160px;">
           <canvas id="top-pie-chart" width="160" height="160"></canvas>
-          <div id="pie-center-label" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:22px; font-weight:800; color:#1F1F1F; pointer-events:none;"></div>
+          <div id="pie-center-label" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:22px; font-weight:800; color:var(--text-main); pointer-events:none;"></div>
         </div>
         <div id="top-pie-legend"></div>
       </div>
@@ -206,7 +309,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
     <div class="stat-tab active" id="st-category"><div class="card"><div id="cat-detail-list"></div></div></div>
     <div class="stat-tab" id="st-monthly"><div class="card"><canvas id="monthly-chart" height="190"></canvas></div></div>
     <div class="stat-tab" id="st-yearly">
-      <div class="metrics-row" style="padding:0 0 12px"><div class="metric"><div class="metric-label">年間収入</div><div class="metric-val" style="color:#146C2E;" id="y-inc">¥0</div></div><div class="metric"><div class="metric-label">年間支出</div><div class="metric-val exp" id="y-exp">¥0</div></div></div>
+      <div class="metrics-row" style="padding:0 0 12px"><div class="metric"><div class="metric-label">年間収入</div><div class="metric-val" style="color:var(--success);" id="y-inc">¥0</div></div><div class="metric"><div class="metric-label">年間支出</div><div class="metric-val exp" id="y-exp">¥0</div></div></div>
       <div class="card"><canvas id="yearly-chart" height="190"></canvas></div>
     </div>
   </div>
@@ -219,9 +322,9 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
       <div id="fixed-expense-list"></div>
       <div class="fixed-total-bar">
         <span class="fixed-total-label">月の合計固定支出</span>
-        <span class="fixed-total-val" style="color:#BA1A1A;" id="fixed-exp-total">¥0</span>
+        <span class="fixed-total-val" style="color:var(--danger);" id="fixed-exp-total">¥0</span>
       </div>
-      <button class="add-fixed-btn" onclick="openModal('fe')"><i class="ti ti-plus"></i> 固定支出を追加</button>
+      <button class="add-fixed-btn" onclick="openModal('fe'); lightVibe();"><i class="ti ti-plus"></i> 固定支出を追加</button>
     </div>
   </div>
   <div class="section">
@@ -230,9 +333,9 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
       <div id="fixed-income-list"></div>
       <div class="fixed-total-bar">
         <span class="fixed-total-label">月の合計固定収入</span>
-        <span class="fixed-total-val" style="color:#146C2E;" id="fixed-inc-total">¥0</span>
+        <span class="fixed-total-val" style="color:var(--success);" id="fixed-inc-total">¥0</span>
       </div>
-      <button class="add-fixed-btn" onclick="openModal('fi')"><i class="ti ti-plus"></i> 固定収入を追加</button>
+      <button class="add-fixed-btn" onclick="openModal('fi'); lightVibe();"><i class="ti ti-plus"></i> 固定収入を追加</button>
     </div>
   </div>
   <div class="section">
@@ -244,13 +347,25 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
       <div class="cat-input-row" style="margin-bottom:0"><input class="m3-input" type="text" id="new-inc-cat" placeholder="収入カテゴリ追加"><button class="cat-add-btn" onclick="addCat('inc')">追加</button></div>
     </div>
   </div>
+  
+  <div class="section">
+    <div class="section-label">テーマ設定</div>
+    <div class="card">
+      <select class="m3-input" id="theme-select" onchange="changeTheme(this.value)">
+        <option value="auto">デバイスの設定に合わせる</option>
+        <option value="light">ライトモード</option>
+        <option value="dark">ダークモード</option>
+      </select>
+    </div>
+  </div>
+
   <div class="section">
     <div class="section-label">同期とデータ</div>
     <div class="card">
-      <button class="action-btn" onclick="authAndSync('save')" style="color:#0A56D1;"><i class="ti ti-cloud-upload"></i> Driveへ保存</button>
-      <button class="action-btn" onclick="authAndSync('load')" style="color:#146C2E;"><i class="ti ti-cloud-download"></i> Driveから復元</button>
-      <button class="action-btn" onclick="exportCSV()"><i class="ti ti-download"></i> CSV出力</button>
-      <button class="action-btn" onclick="document.getElementById('csv-import').click()"><i class="ti ti-upload"></i> CSV入力</button>
+      <button class="action-btn" onclick="authAndSync('save')" style="color:var(--primary);"><i class="ti ti-cloud-upload"></i> Driveへ保存</button>
+      <button class="action-btn" onclick="authAndSync('load')" style="color:var(--success);"><i class="ti ti-cloud-download"></i> Driveから復元</button>
+      <button class="action-btn" onclick="lightVibe(); exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
+      <button class="action-btn" onclick="lightVibe(); document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
       <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)">
       <button class="danger-btn" onclick="if(confirm('全データを削除しますか？'))clearAll()"><i class="ti ti-trash"></i> データ全削除</button>
     </div>
@@ -262,7 +377,7 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
     <div class="modal-head" id="edit-head">履歴の編集</div>
     <input class="m3-input" type="number" id="edit-amount" placeholder="金額" style="margin-bottom:8px" inputmode="numeric">
     <input class="m3-input" type="date" id="edit-date" style="margin-bottom:8px">
-    <select class="m3-input" id="edit-cat" style="width:100%;margin-bottom:8px"></select>
+    <select class="m3-input" id="edit-cat" style="width:100%;margin-bottom:8px" onchange="handleEditCatChange(this)"></select>
     <input class="m3-input" type="text" id="edit-note" placeholder="メモ" style="margin-bottom:8px">
     <div class="modal-foot">
       <button class="btn-ghost" onclick="closeModal('edit')">中止</button>
@@ -270,13 +385,51 @@ body{background:#F6F8FC;color:#1F1F1F;font-size:15px; -webkit-tap-highlight-colo
     </div>
   </div>
 </div>
-<div class="modal-wrap" id="modal-fi" onclick="if(event.target===this)closeModal('fi')"><div class="modal"><div class="modal-head">固定収入</div><input class="m3-input" type="text" id="fi-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fi-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fi-cat" style="width:100%"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fi')">中止</button><button class="btn-filled" onclick="saveFixed('income')">保存</button></div></div></div>
-<div class="modal-wrap" id="modal-fe" onclick="if(event.target===this)closeModal('fe')"><div class="modal"><div class="modal-head">固定支出</div><input class="m3-input" type="text" id="fe-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fe-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fe-cat" style="width:100%"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fe')">中止</button><button class="btn-filled" onclick="saveFixed('expense')">保存</button></div></div></div>
-<div class="modal-wrap" id="modal-sync-alert" onclick="if(event.target===this)closeSyncPopup()"><div class="modal"><div class="modal-head" style="color:#BA1A1A;">同期の確認</div><p style="margin-bottom:16px;line-height:1.6;">1週間以上バックアップされていません。データを保存しますか？</p><label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin-bottom:24px;"><input type="checkbox" id="skip-sync-popup-check"> 以後表示しない</label><div class="modal-foot"><button class="btn-ghost" onclick="closeSyncPopup()">後で</button><button class="btn-filled" onclick="closeSyncPopup(); showPage('settings', document.querySelectorAll('.nav-btn')[3]);">設定へ</button></div></div></div>
+<div class="modal-wrap" id="modal-fi" onclick="if(event.target===this)closeModal('fi')"><div class="modal"><div class="modal-head">固定収入</div><input class="m3-input" type="text" id="fi-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fi-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fi-cat" style="width:100%" onchange="handleCatChange(this, 'inc')"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fi')">中止</button><button class="btn-filled" onclick="saveFixed('income')">保存</button></div></div></div>
+<div class="modal-wrap" id="modal-fe" onclick="if(event.target===this)closeModal('fe')"><div class="modal"><div class="modal-head">固定支出</div><input class="m3-input" type="text" id="fe-name" placeholder="名称" style="margin-bottom:8px"><input class="m3-input" type="number" id="fe-amount" placeholder="金額" style="margin-bottom:8px"><select class="m3-input" id="fe-cat" style="width:100%" onchange="handleCatChange(this, 'exp')"></select><div class="modal-foot"><button class="btn-ghost" onclick="closeModal('fe')">中止</button><button class="btn-filled" onclick="saveFixed('expense')">保存</button></div></div></div>
+<div class="modal-wrap" id="modal-sync-alert" onclick="if(event.target===this)closeSyncPopup()"><div class="modal"><div class="modal-head" style="color:var(--danger);">同期の確認</div><p style="margin-bottom:16px;line-height:1.6;color:var(--text-main);">1週間以上バックアップされていません。データを保存しますか？</p><label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin-bottom:24px;color:var(--text-main);"><input type="checkbox" id="skip-sync-popup-check"> 以後表示しない</label><div class="modal-foot"><button class="btn-ghost" onclick="closeSyncPopup()">後で</button><button class="btn-filled" onclick="closeSyncPopup(); showPage('settings', document.querySelectorAll('.nav-btn')[3]);">設定へ</button></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
+/* ================= 触覚フィードバック ================= */
+function lightVibe() {
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+/* ================= テーマ設定 ================= */
+let currentTheme = localStorage.getItem('kakeibo_theme') || 'auto';
+
+function initTheme() {
+  const el = document.getElementById('theme-select');
+  if(el) el.value = currentTheme;
+  applyTheme(currentTheme);
+}
+
+function changeTheme(theme) {
+  lightVibe();
+  currentTheme = theme;
+  localStorage.setItem('kakeibo_theme', theme);
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if(document.getElementById('page-stats').classList.contains('active')) renderStats();
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (currentTheme === 'auto' && document.getElementById('page-stats').classList.contains('active')) {
+    renderStats();
+  }
+});
+
+function isDarkMode() {
+  if (currentTheme === 'dark') return true;
+  if (currentTheme === 'light') return false;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 /* ================= Drive API ================= */
 const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
@@ -286,12 +439,12 @@ function gisLoaded(){ tokenClient = google.accounts.oauth2.initTokenClient({clie
 function getDiffDays(dStr){ if(!dStr)return null; const t=new Date(); t.setHours(0,0,0,0); const p=dStr.split('-'); const l=new Date(p[0],p[1]-1,p[2]); l.setHours(0,0,0,0); return Math.floor((t-l)/(864e5)); }
 function updateBackupStatusText(){
   const last=localStorage.getItem('kakeibo_last_backup'), el=document.getElementById('backup-status');
-  if(last){ const d=getDiffDays(last); el.innerHTML=`<i class="ti ti-cloud-check"></i> ${d}日`; el.style.color=(d>=7?'#BA1A1A':'#146C2E'); el.style.background=(d>=7?'#FFDAD6':'#E8F5E9'); }
-  else { el.innerHTML='<i class="ti ti-cloud-upload"></i> 未同期'; el.style.color='#BA1A1A'; el.style.background='#FFDAD6'; }
+  if(last){ const d=getDiffDays(last); el.innerHTML=`<i class="ti ti-cloud-check"></i> ${d}日`; el.style.color=(d>=7?'var(--danger)':'var(--success)'); el.style.background=(d>=7?'var(--danger-container)':'var(--success-container)'); }
+  else { el.innerHTML='<i class="ti ti-cloud-upload"></i> 未同期'; el.style.color='var(--danger)'; el.style.background='var(--danger-container)'; }
 }
 function checkSyncAlert(){ if(localStorage.getItem('kakeibo_skip_sync_popup')==='true')return; let f=localStorage.getItem('kakeibo_first_launch'); if(!f){f=ymdLocal(new Date()); localStorage.setItem('kakeibo_first_launch',f); return;} const l=localStorage.getItem('kakeibo_last_backup'), base=l?l:f; if(getDiffDays(base)>=7)openModal('sync-alert'); }
 function closeSyncPopup(){ if(document.getElementById('skip-sync-popup-check').checked)localStorage.setItem('kakeibo_skip_sync_popup','true'); closeModal('sync-alert'); }
-function authAndSync(mode){ if(!gapiInited||!gisInited)return; tokenClient.callback=async(r)=>{if(!r.error){if(mode==='save')await saveToDrive();else await loadFromDrive();}}; tokenClient.requestAccessToken({prompt:(gapi.client.getToken()===null?'consent':'')}); }
+function authAndSync(mode){ lightVibe(); if(!gapiInited||!gisInited)return; tokenClient.callback=async(r)=>{if(!r.error){if(mode==='save')await saveToDrive();else await loadFromDrive();}}; tokenClient.requestAccessToken({prompt:(gapi.client.getToken()===null?'consent':'')}); }
 async function saveToDrive(){ try{ const fileName='kakeibo_backup.json', metadata={name:fileName, parents:['appDataFolder']}, fileContent=JSON.stringify(D); const res=await gapi.client.drive.files.list({q:`name='${fileName}'`, spaces:'appDataFolder'}); const exist=res.result.files&&res.result.files[0], b='boundary_xxx', delim=`\r\n--${b}\r\n`, close=`\r\n--${b}--`; const body=`${delim}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}${delim}Content-Type: application/json\r\n\r\n${fileContent}${close}`; const path=exist?`/upload/drive/v3/files/${exist.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart'; await gapi.client.request({path, method:exist?'PATCH':'POST', params:{uploadType:'multipart'}, headers:{'Content-Type':`multipart/related; boundary=${b}`}, body}); localStorage.setItem('kakeibo_last_backup', ymdLocal(new Date())); updateBackupStatusText(); alert('保存しました'); }catch(e){alert('失敗');} }
 async function loadFromDrive(){ try{ const res=await gapi.client.drive.files.list({q:"name='kakeibo_backup.json'", spaces:'appDataFolder', fields:'files(id)'}); if(!res.result.files||res.result.files.length===0){alert('なし');return;} const data=await gapi.client.drive.files.get({fileId:res.result.files[0].id, alt:'media'}); if(confirm('復元しますか？')){ D=data.result; save(); refresh(); alert('完了'); } }catch(e){alert('失敗');} }
 
@@ -314,14 +467,16 @@ function save(){ try{localStorage.setItem('kakeibo_v6',JSON.stringify(D));}catch
 function fmt(n){return '¥'+Math.round(n).toLocaleString()}
 function curKey(){ const m = ('0' + (curMonth.getMonth() + 1)).slice(-2); return `${curMonth.getFullYear()}-${m}`; }
 function escapeHTML(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
+function safeJS(str) { return String(str||'').replace(/'/g, "\\'"); }
 
 function applyFixed(key){
   D.fixedIncome.forEach(f=>{ if((!f.startDate||key>=f.startDate)&&!D.deletedFixed.some(d=>d.fixedId===f.id&&d.month===key)&&!D.income.find(i=>i.fixedId===f.id&&i.date.startsWith(key))) D.income.push({id:Date.now()+Math.random(),date:key+'-01',amount:f.amount,cat:f.cat,note:f.name,fixed:true,fixedId:f.id}); });
   D.fixedExpense.forEach(f=>{ if((!f.startDate||key>=f.startDate)&&!D.deletedFixed.some(d=>d.fixedId===f.id&&d.month===key)&&!D.expenses.find(e=>e.fixedId===f.id&&e.date.startsWith(key))) D.expenses.push({id:Date.now()+Math.random(),date:key+'-01',amount:f.amount,cat:f.cat,note:f.name,fixed:true,fixedId:f.id}); });
   save();
 }
-function delItem(t,id){
-  event.stopPropagation();
+function delItem(e, t, id){
+  if(e) e.stopPropagation();
+  lightVibe();
   const list=t==='exp'?D.expenses:D.income; const item=list.find(i=>String(i.id)===String(id)); if(!item)return;
   if(item.fixed&&!confirm("自動履歴を削除しますか？"))return;
   if(item.fixed)D.deletedFixed.push({fixedId:item.fixedId,month:item.date.slice(0,7)});
@@ -340,76 +495,108 @@ function handleSearch(t){
 
 function renderItems(cid,items,type){
   const el=document.getElementById(cid); if(!items||!items.length){el.innerHTML='<div class="empty-state">履歴なし</div>';return;}
-  el.innerHTML=items.sort((a,b)=>b.date.localeCompare(a.date)).map(item=>`<div class="list-item"><div class="item-icon"><i class="ti ${CAT_ICONS[item.cat]||'ti-circle'}"></i></div><div class="item-body ${!item.fixed ? 'editable' : ''}" ${!item.fixed ? `onclick="openEditModal('${type}','${item.id}')" style="cursor:pointer"` : ''}><div class="item-cat">${escapeHTML(item.cat)}${item.fixed?'<span class="badge">固定</span>':''}</div>${item.note?`<div class="item-note">${escapeHTML(item.note)}</div>`:''}</div><div class="item-right"><div class="item-amount ${type==='exp'?'e':'i'}">${type==='exp'?'−':'+'}${fmt(item.amount)}</div><div class="item-date">${item.date.slice(5)}</div></div><button class="del-btn" onclick="delItem('${type}','${item.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+  el.innerHTML=items.sort((a,b)=>{if(a.date!==b.date)return b.date.localeCompare(a.date);return b.id-a.id;}).map(item=>`<div class="list-item"><div class="item-icon"><i class="ti ${CAT_ICONS[item.cat]||'ti-circle'}"></i></div><div class="item-body ${!item.fixed ? 'editable' : ''}" ${!item.fixed ? `onclick="openEditModal('${type}','${item.id}')" style="cursor:pointer"` : ''}><div class="item-cat">${escapeHTML(item.cat)}${item.fixed?'<span class="badge">固定</span>':''}</div>${item.note?`<div class="item-note">${escapeHTML(item.note)}</div>`:''}</div><div class="item-right"><div class="item-amount ${type==='exp'?'e':'i'}">${type==='exp'?'−':'+'}${fmt(item.amount)}</div><div class="item-date">${item.date.slice(5)}</div></div><button class="del-btn" onclick="delItem(event, '${type}','${item.id}')"><i class="ti ti-x"></i></button></div>`).join('');
 }
-function populateSelects(){ ['exp-cat','fe-cat'].forEach(id=>{ const s=document.getElementById(id); if(s)s.innerHTML=D.expCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join(''); }); ['inc-cat','fi-cat'].forEach(id=>{ const s=document.getElementById(id); if(s)s.innerHTML=D.incCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join(''); }); }
-function renderCatChips(){ const e=document.getElementById('exp-cat-chips'); if(e)e.innerHTML=D.expCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('exp','${escapeHTML(c)}')">&times;</span></span>`).join(''); const i=document.getElementById('inc-cat-chips'); if(i)i.innerHTML=D.incCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('inc','${escapeHTML(c)}')">&times;</span></span>`).join(''); }
-function addCat(t){ const i=document.getElementById('new-'+t+'-cat'),v=i.value.trim(); if(!v)return; if(t==='exp'&&!D.expCats.includes(v))D.expCats.push(v); if(t==='inc'&&!D.incCats.includes(v))D.incCats.push(v); i.value=''; save(); populateSelects(); renderCatChips(); }
-function removeCat(t,n){ if(t==='exp')D.expCats=D.expCats.filter(c=>c!==n); else D.incCats=D.incCats.filter(c=>c!==n); save(); populateSelects(); renderCatChips(); }
-function addExpense(){ const a=+document.getElementById('exp-amount').value, d=document.getElementById('exp-date').value; if(!a||!d)return; D.expenses.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('exp-cat').value,note:document.getElementById('exp-note').value}); document.getElementById('exp-amount').value=''; document.getElementById('exp-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
-function addIncome(){ const a=+document.getElementById('inc-amount').value, d=document.getElementById('inc-date').value; if(!a||!d)return; D.income.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('inc-cat').value,note:document.getElementById('inc-note').value}); document.getElementById('inc-amount').value=''; document.getElementById('inc-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+
+/* ================= カテゴリのインライン追加機能 ================= */
+function populateSelects(){ 
+  ['exp-cat','fe-cat'].forEach(id=>{ const s=document.getElementById(id); if(s){ const v=s.value; s.innerHTML=D.expCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(D.expCats.includes(v)) s.value=v; } }); 
+  ['inc-cat','fi-cat'].forEach(id=>{ const s=document.getElementById(id); if(s){ const v=s.value; s.innerHTML=D.incCats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(D.incCats.includes(v)) s.value=v; } }); 
+  const ec=document.getElementById('edit-cat'); if(ec&&editTarget){ const v=ec.value, cats=editTarget.type==='exp'?D.expCats:D.incCats; ec.innerHTML=cats.map(c=>`<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')+'<option value="__add_new__" style="color:var(--primary);font-weight:bold;">＋ 新しく追加...</option>'; if(cats.includes(v)) ec.value=v; }
+}
+
+function handleCatChange(el, t){
+  if(el.value==='__add_new__'){
+    lightVibe();
+    const nc=prompt('新しいカテゴリ名を入力してください');
+    if(nc&&nc.trim()){
+      const v=nc.trim();
+      if(t==='exp'&&!D.expCats.includes(v)) D.expCats.push(v);
+      if(t==='inc'&&!D.incCats.includes(v)) D.incCats.push(v);
+      save(); populateSelects(); renderCatChips();
+      el.value=v;
+    } else {
+      el.selectedIndex=0;
+    }
+  }
+}
+function handleEditCatChange(el){ if(editTarget) handleCatChange(el, editTarget.type); }
+
+function renderCatChips(){ const e=document.getElementById('exp-cat-chips'); if(e)e.innerHTML=D.expCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('exp','${safeJS(c)}')">&times;</span></span>`).join(''); const i=document.getElementById('inc-cat-chips'); if(i)i.innerHTML=D.incCats.map(c=>`<span class="cat-chip">${escapeHTML(c)}<span class="x" onclick="removeCat('inc','${safeJS(c)}')">&times;</span></span>`).join(''); }
+function addCat(t){ lightVibe(); const i=document.getElementById('new-'+t+'-cat'),v=i.value.trim(); if(!v)return; if(t==='exp'&&!D.expCats.includes(v))D.expCats.push(v); if(t==='inc'&&!D.incCats.includes(v))D.incCats.push(v); i.value=''; save(); populateSelects(); renderCatChips(); }
+function removeCat(t,n){ lightVibe(); if(t==='exp')D.expCats=D.expCats.filter(c=>c!==n); else D.incCats=D.incCats.filter(c=>c!==n); save(); populateSelects(); renderCatChips(); }
+function addExpense(){ lightVibe(); const a=+document.getElementById('exp-amount').value, d=document.getElementById('exp-date').value; if(!a||!d)return; D.expenses.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('exp-cat').value,note:document.getElementById('exp-note').value}); document.getElementById('exp-amount').value=''; document.getElementById('exp-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+function addIncome(){ lightVibe(); const a=+document.getElementById('inc-amount').value, d=document.getElementById('inc-date').value; if(!a||!d)return; D.income.push({id:Date.now(),date:d,amount:a,cat:document.getElementById('inc-cat').value,note:document.getElementById('inc-note').value}); document.getElementById('inc-amount').value=''; document.getElementById('inc-note').value=''; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 
 function openEditModal(type, id) {
+  lightVibe();
   const list = type === 'exp' ? D.expenses : D.income; const item = list.find(i => String(i.id) === String(id)); if (!item || item.fixed) return;
   editTarget = { type, id }; document.getElementById('edit-head').textContent = type === 'exp' ? '支出の編集' : '収入の編集';
   document.getElementById('edit-amount').value = item.amount; document.getElementById('edit-date').value = item.date;
-  const catSelect = document.getElementById('edit-cat'); catSelect.innerHTML = (type === 'exp' ? D.expCats : D.incCats).map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
-  catSelect.value = item.cat; document.getElementById('edit-note').value = item.note || ''; openModal('edit');
+  populateSelects(); // セレクトボックスの選択肢を更新
+  document.getElementById('edit-cat').value = item.cat; 
+  document.getElementById('edit-note').value = item.note || ''; openModal('edit');
 }
 function saveEdit() {
+  lightVibe();
   if (!editTarget) return; const list = editTarget.type === 'exp' ? D.expenses : D.income; const item = list.find(i => String(i.id) === String(editTarget.id));
   if (item) { item.amount = +document.getElementById('edit-amount').value; item.date = document.getElementById('edit-date').value; item.cat = document.getElementById('edit-cat').value; item.note = document.getElementById('edit-note').value; save(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
   closeModal('edit');
 }
 
 function renderFixedLists(){
-  document.getElementById('fixed-expense-list').innerHTML=D.fixedExpense.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:#BA1A1A;">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('expense','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+  document.getElementById('fixed-expense-list').innerHTML=D.fixedExpense.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:var(--danger);">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('expense','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
   document.getElementById('fixed-exp-total').textContent = fmt(D.fixedExpense.reduce((s,f)=>s+f.amount,0));
-  document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:#146C2E;">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('income','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
+  document.getElementById('fixed-income-list').innerHTML=D.fixedIncome.map(f=>`<div class="fixed-row"><div style="flex:1"><div class="fixed-label">${escapeHTML(f.name)}</div><div class="fixed-sub">${escapeHTML(f.cat)}</div></div><div style="font-weight:700;color:var(--success);">${fmt(f.amount)}</div><button class="del-btn" onclick="delFixed('income','${f.id}')"><i class="ti ti-x"></i></button></div>`).join('');
   document.getElementById('fixed-inc-total').textContent = fmt(D.fixedIncome.reduce((s,f)=>s+f.amount,0));
 }
 
-function delFixed(t,id){ if(t==='income')D.fixedIncome=D.fixedIncome.filter(f=>String(f.id)!==String(id)); else D.fixedExpense=D.fixedExpense.filter(f=>String(f.id)!==String(id)); save(); renderFixedLists(); refresh(); }
+function delFixed(t,id){ lightVibe(); if(t==='income')D.fixedIncome=D.fixedIncome.filter(f=>String(f.id)!==String(id)); else D.fixedExpense=D.fixedExpense.filter(f=>String(f.id)!==String(id)); save(); renderFixedLists(); refresh(); }
 function openModal(id){document.getElementById('modal-'+id).classList.add('open')}
 function closeModal(id){document.getElementById('modal-'+id).classList.remove('open')}
-function saveFixed(t){ const p=t==='income'?'fi':'fe', name=document.getElementById(p+'-name').value.trim(), amount=+document.getElementById(p+'-amount').value; if(!name||!amount)return; if(t==='income')D.fixedIncome.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); else D.fixedExpense.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); document.getElementById(p+'-name').value=''; closeModal(p); save(); renderFixedLists(); refresh(); }
+function saveFixed(t){ lightVibe(); const p=t==='income'?'fi':'fe', name=document.getElementById(p+'-name').value.trim(), amount=+document.getElementById(p+'-amount').value; if(!name||!amount)return; if(t==='income')D.fixedIncome.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); else D.fixedExpense.push({id:Date.now(),name,amount,cat:document.getElementById(p+'-cat').value,startDate:curKey()}); document.getElementById(p+'-name').value=''; closeModal(p); save(); renderFixedLists(); refresh(); }
 
 function updateMonthLabels(){ const txt=curMonth.getFullYear()+'年'+(curMonth.getMonth()+1)+'月'; const val=`${curMonth.getFullYear()}-${('0'+(curMonth.getMonth()+1)).slice(-2)}`; document.querySelectorAll('.month-label').forEach(el=>el.textContent=txt); document.querySelectorAll('.month-picker').forEach(el=>el.value=val); }
-function jumpMonth(val){ if(!val)return; const parts=val.split('-'); curMonth=new Date(parts[0], parts[1]-1, 1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
-function changeMonth(dir){ curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+dir,1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+function jumpMonth(val){ lightVibe(); if(!val)return; const parts=val.split('-'); curMonth=new Date(parts[0], parts[1]-1, 1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
+function changeMonth(dir){ lightVibe(); curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+dir,1); updateMonthLabels(); refresh(); if(document.getElementById('page-stats').classList.contains('active')) renderStats(); }
 
 function showPage(n,btn){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.getElementById('page-'+n).classList.add('active'); btn.classList.add('active'); if(n==='home'||n==='income')refresh(); if(n==='stats')renderStats(); }
-function switchStat(t,btn){ document.querySelectorAll('.stat-tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active')); document.getElementById('st-'+t).classList.add('active'); btn.classList.add('active'); renderStatTab(t); }
+function switchStat(t,btn){ lightVibe(); document.querySelectorAll('.stat-tab').forEach(x=>x.classList.remove('active')); document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active')); document.getElementById('st-'+t).classList.add('active'); btn.classList.add('active'); renderStatTab(t); }
+
 function renderStats(){ renderTopPie(); const a=document.querySelector('.stat-tab.active'); if(a)renderStatTab(a.id.replace('st-','')); }
 function getBycat(k){ applyFixed(k); const b={}; D.expenses.filter(e=>e.date.startsWith(k)).forEach(e=>{b[e.cat]=(b[e.cat]||0)+e.amount}); return b; }
 
 function renderTopPie(){
-  const k=curKey(), b=getBycat(k), l=Object.keys(b), v=l.map(x=>b[x]), c=l.map(x=>getCatColor(x)), ctx=document.getElementById('top-pie-chart').getContext('2d');
+  const k=curKey(), b=getBycat(k), l=Object.keys(b).sort((x,y)=>b[y]-b[x]), v=l.map(x=>b[x]), c=l.map(x=>getCatColor(x)), ctx=document.getElementById('top-pie-chart').getContext('2d');
   document.getElementById('pie-center-label').textContent = parseInt(k.split('-')[1]) + '月';
   
   if(charts.topPie){ charts.topPie.data.labels = l; charts.topPie.data.datasets[0].data = v; charts.topPie.data.datasets[0].backgroundColor = c; charts.topPie.update(); }
   else { charts.topPie=new Chart(ctx,{type:'doughnut',data:{labels:l,datasets:[{data:v,backgroundColor:c,borderWidth:0}]},options:{responsive:false,cutout:'65%',plugins:{legend:{display:false}}}}); }
   
   if(!l.length){ document.getElementById('top-pie-legend').innerHTML=''; return; }
-  const t=v.reduce((x,y)=>x+y,0); document.getElementById('top-pie-legend').innerHTML=l.map((x,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${c[i]}"></div><span style="flex:1;font-weight:700">${escapeHTML(x)}</span><span>${Math.round(b[x]/t*100)}%</span></div>`).join('');
+  const t=v.reduce((x,y)=>x+y,0); document.getElementById('top-pie-legend').innerHTML=l.map((x,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${c[i]}"></div><span style="flex:1;font-weight:700;color:var(--text-main);">${escapeHTML(x)}</span><span style="color:var(--text-main);">${Math.round(b[x]/t*100)}%</span></div>`).join('');
 }
 
 function renderStatTab(t){
-  const tc='#1F1F1F', gc='rgba(0,0,0,0.05)';
+  const tc = isDarkMode() ? '#E3E3E3' : '#1F1F1F';
+  const gc = isDarkMode() ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+  const cInc = isDarkMode() ? '#81C995' : '#146C2E';
+  const cExp = isDarkMode() ? '#FFB4AB' : '#BA1A1A';
+
   if(t==='monthly'){
     const ms=[]; for(let i=5;i>=0;i--){const d=new Date(curMonth.getFullYear(),curMonth.getMonth()-i,1);ms.push(d.toISOString().slice(0,7))}
     const labels=ms.map(x=>parseInt(x.split('-')[1])+'月'), incData=ms.map(x=>getTotals(x).inc), expData=ms.map(x=>getTotals(x).exp);
-    if(charts.monthly){ charts.monthly.data.labels = labels; charts.monthly.data.datasets[0].data = incData; charts.monthly.data.datasets[1].data = expData; charts.monthly.update(); }
-    else { charts.monthly=new Chart(document.getElementById('monthly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:'#146C2E',borderRadius:6},{label:'支出',data:expData,backgroundColor:'#BA1A1A',borderRadius:6}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}}); }
+    if(charts.monthly) charts.monthly.destroy();
+    charts.monthly=new Chart(document.getElementById('monthly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:cInc,borderRadius:6},{label:'支出',data:expData,backgroundColor:cExp,borderRadius:6}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}});
   }else if(t==='category'){
     const b=getBycat(curKey()), l=Object.keys(b).sort((x,y)=>b[y]-b[x]), total=l.reduce((x,y)=>x+b[y],0);
-    document.getElementById('cat-detail-list').innerHTML=l.map(x=>`<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><b>${escapeHTML(x)}</b><span style="color:#BA1A1A">${fmt(b[x])}</span></div><div style="background:#F0F4F9;height:8px;border-radius:999px;overflow:hidden"><div style="background:${getCatColor(x)};width:${Math.round(b[x]/total*100)}%;height:100%;"></div></div></div>`).join('');
+    document.getElementById('cat-detail-list').innerHTML=l.map(x=>`<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><b style="color:var(--text-main);">${escapeHTML(x)}</b><span style="color:var(--danger);">${fmt(b[x])}</span></div><div style="background:var(--input-bg);height:8px;border-radius:999px;overflow:hidden"><div style="background:${getCatColor(x)};width:${Math.round(b[x]/total*100)}%;height:100%;"></div></div></div>`).join('');
   }else{
     const y=curMonth.getFullYear(); const ms=Array.from({length:12},(_,i)=>`${y}-${String(i+1).padStart(2,'0')}`);
     const labels=ms.map(x=>parseInt(x.split('-')[1])+'月'), expData=ms.map(x=>getTotals(x).exp), incData=ms.map(x=>getTotals(x).inc);
     document.getElementById('y-inc').textContent=fmt(incData.reduce((a,b)=>a+b,0)); document.getElementById('y-exp').textContent=fmt(expData.reduce((a,b)=>a+b,0));
-    if(charts.yearly){ charts.yearly.data.labels = labels; charts.yearly.data.datasets[0].data = incData; charts.yearly.data.datasets[1].data = expData; charts.yearly.update(); }
-    else { charts.yearly=new Chart(document.getElementById('yearly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:'#146C2E',borderRadius:4},{label:'支出',data:expData,backgroundColor:'#BA1A1A',borderRadius:4}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}}); }
+    if(charts.yearly) charts.yearly.destroy();
+    charts.yearly=new Chart(document.getElementById('yearly-chart').getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'収入',data:incData,backgroundColor:cInc,borderRadius:4},{label:'支出',data:expData,backgroundColor:cExp,borderRadius:4}]},options:{responsive:true,scales:{x:{ticks:{color:tc},grid:{color:gc}},y:{ticks:{color:tc,callback:v=>'¥'+v.toLocaleString()},grid:{color:gc}}}}});
   }
 }
 
@@ -435,6 +622,7 @@ function setToday() {
 }
 
 window.onload=()=>{
+  initTheme();
   gapiLoaded(); gisLoaded(); setToday(); updateMonthLabels();
   refresh(); setTimeout(checkSyncAlert,800);
 };
@@ -478,9 +666,11 @@ function handleSwipe(targetElement) {
 
   if (deltaX < 0 && currentIndex < tabs.length - 1) {
     // 左にフリック（右のタブへ進む）
+    lightVibe();
     showPage(tabs[currentIndex + 1], navBtns[currentIndex + 1]);
   } else if (deltaX > 0 && currentIndex > 0) {
     // 右にフリック（左のタブへ戻る）
+    lightVibe();
     showPage(tabs[currentIndex - 1], navBtns[currentIndex - 1]);
   }
 }
