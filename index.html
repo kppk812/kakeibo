@@ -154,7 +154,7 @@ select.m3-input {
 .search-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 20px; }
 .search-wrapper input { padding-left: 48px; border-radius: 999px; }
 
-/* ボタン (角丸を統一) */
+/* ボタン */
 .fab{width:100%;padding:18px;border-radius:999px;border:none;background:var(--primary);color:var(--on-primary);font-size:16px;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 6px 16px rgba(10,86,209,0.25);transition:all 0.2s}
 .fab:active{transform:scale(0.96)}
 .del-btn{background:var(--input-bg);border:none;color:var(--text-sub);cursor:pointer;width:36px;height:36px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;transition:background 0.2s;position:relative;z-index:2;}
@@ -364,10 +364,10 @@ select.m3-input {
     <div class="card">
       <button class="action-btn" onclick="authAndSync('save')" style="color:var(--primary);"><i class="ti ti-cloud-upload"></i> Driveへ保存</button>
       <button class="action-btn" onclick="authAndSync('load')" style="color:var(--success);"><i class="ti ti-cloud-download"></i> Driveから復元</button>
-      <button class="action-btn" onclick="exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
-      <button class="action-btn" onclick="document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
+      <button class="action-btn" onclick="lightVibe(); exportCSV();"><i class="ti ti-download"></i> CSV出力</button>
+      <button class="action-btn" onclick="lightVibe(); document.getElementById('csv-import').click();"><i class="ti ti-upload"></i> CSV入力</button>
       <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)">
-      <button class="danger-btn" onclick="if(confirm('全データを削除しますか？'))clearAll()"><i class="ti ti-trash"></i> データ全削除</button>
+      <button class="danger-btn" onclick="lightVibe(); if(confirm('全データを削除しますか？'))clearAll()"><i class="ti ti-trash"></i> データ全削除</button>
     </div>
   </div>
 </div>
@@ -407,7 +407,6 @@ function initTheme() {
 }
 
 function changeTheme(theme) {
-  lightVibe();
   currentTheme = theme;
   localStorage.setItem('kakeibo_theme', theme);
   applyTheme(theme);
@@ -444,7 +443,7 @@ function isDarkMode() {
 }
 
 /* ================= Drive API ================= */
-const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com'; 
+const CLIENT_ID = '504605284753-9482edtgg5ndcp8p1723pvf4mfe12t6b.apps.googleusercontent.com';
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 let tokenClient, gapiInited=false, gisInited=false;
 function gapiLoaded(){ gapi.load('client', ()=>{ gapi.client.init({}).then(()=>{ gapi.client.load('drive','v3'); gapiInited=true; }); }); }
@@ -456,10 +455,10 @@ function updateBackupStatusText(){
   else { el.innerHTML='<i class="ti ti-cloud-upload"></i> 未同期'; el.style.color='var(--danger)'; el.style.background='var(--danger-container)'; }
 }
 function checkSyncAlert(){ if(localStorage.getItem('kakeibo_skip_sync_popup')==='true')return; let f=localStorage.getItem('kakeibo_first_launch'); if(!f){f=ymdLocal(new Date()); localStorage.setItem('kakeibo_first_launch',f); return;} const l=localStorage.getItem('kakeibo_last_backup'), base=l?l:f; if(getDiffDays(base)>=7)openModal('sync-alert'); }
-function closeSyncPopup(){ if(document.getElementById('skip-sync-popup-check').checked)localStorage.setItem('kakeibo_skip_sync_popup','true'); closeModal('sync-alert'); }
+function closeSyncPopup(){ lightVibe(); if(document.getElementById('skip-sync-popup-check').checked)localStorage.setItem('kakeibo_skip_sync_popup','true'); closeModal('sync-alert'); }
 function authAndSync(mode){ lightVibe(); if(!gapiInited||!gisInited)return; tokenClient.callback=async(r)=>{if(!r.error){if(mode==='save')await saveToDrive();else await loadFromDrive();}}; tokenClient.requestAccessToken({prompt:(gapi.client.getToken()===null?'consent':'')}); }
-async function saveToDrive(){ try{ const fileName='kakeibo_backup.json', metadata={name:fileName, parents:['appDataFolder']}, fileContent=JSON.stringify(D); const res=await gapi.client.drive.files.list({q:`name='${fileName}'`, spaces:'appDataFolder'}); const exist=res.result.files&&res.result.files[0], b='boundary_xxx', delim=`\r\n--${b}\r\n`, close=`\r\n--${b}--`; const body=`${delim}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}${delim}Content-Type: application/json\r\n\r\n${fileContent}${close}`; const path=exist?`/upload/drive/v3/files/${exist.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart'; await gapi.client.request({path, method:exist?'PATCH':'POST', params:{uploadType:'multipart'}, headers:{'Content-Type':`multipart/related; boundary=${b}`}, body}); localStorage.setItem('kakeibo_last_backup', ymdLocal(new Date())); updateBackupStatusText(); alert('保存しました'); }catch(e){alert('失敗');} }
-async function loadFromDrive(){ try{ const res=await gapi.client.drive.files.list({q:"name='kakeibo_backup.json'", spaces:'appDataFolder', fields:'files(id)'}); if(!res.result.files||res.result.files.length===0){alert('なし');return;} const data=await gapi.client.drive.files.get({fileId:res.result.files[0].id, alt:'media'}); if(confirm('復元しますか？')){ D=data.result; save(); refresh(); alert('完了'); } }catch(e){alert('失敗');} }
+async function saveToDrive(){ try{ const fileName='my_exclusive_kakeibo_backup.json', metadata={name:fileName, parents:['appDataFolder']}, fileContent=JSON.stringify(D); const res=await gapi.client.drive.files.list({q:`name='${fileName}'`, spaces:'appDataFolder'}); const exist=res.result.files&&res.result.files[0], b='boundary_xxx', delim=`\r\n--${b}\r\n`, close=`\r\n--${b}--`; const body=`${delim}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}${delim}Content-Type: application/json\r\n\r\n${fileContent}${close}`; const path=exist?`/upload/drive/v3/files/${exist.id}?uploadType=multipart` : '/upload/drive/v3/files?uploadType=multipart'; await gapi.client.request({path, method:exist?'PATCH':'POST', params:{uploadType:'multipart'}, headers:{'Content-Type':`multipart/related; boundary=${b}`}, body}); localStorage.setItem('kakeibo_last_backup', ymdLocal(new Date())); updateBackupStatusText(); alert('保存しました'); }catch(e){alert('失敗');} }
+async function loadFromDrive(){ try{ const res=await gapi.client.drive.files.list({q:"name='my_exclusive_kakeibo_backup.json'", spaces:'appDataFolder', fields:'files(id)'}); if(!res.result.files||res.result.files.length===0){alert('バックアップが見つかりません');return;} const data=await gapi.client.drive.files.get({fileId:res.result.files[0].id, alt:'media'}); if(confirm('復元しますか？')){ D=data.result; save(); refresh(); alert('完了'); } }catch(e){alert('失敗');} }
 
 /* ================= Logic ================= */
 const CAT_ICONS={食費:'ti-soup',交通費:'ti-car',日用品:'ti-basket',娯楽:'ti-device-gamepad',医療:'ti-heart-rate-monitor',光熱費:'ti-bulb',通信費:'ti-wifi',給与:'ti-briefcase',副業:'ti-coin',ボーナス:'ti-gift',その他:'ti-dots'};
